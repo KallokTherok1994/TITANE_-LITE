@@ -1,6 +1,6 @@
 {
   "name": "titane-lite",
-  "version": "27.3.0",
+  "version": "27.4.0",
   "description": "TITANE∞ LITE v27.3.0 - Cognitive Operating System: HMR Cascade Fix (critical.css removal), Client-side throttling, CSS watcher optimization",
   "type": "module",
   "license": "SEE LICENSE.md",

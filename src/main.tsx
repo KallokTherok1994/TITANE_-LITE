@@ -6,11 +6,12 @@
  * See LICENSE.md for the full legal terms (FR/EN).
  */
 
-// ✅ v27.3.0: HMR BURST PREVENTION - Client-side deduplication
+// ✅ v27.4.0: HMR BURST PREVENTION - Aggressive client-side deduplication
 // Prevents cascading reloads when multiple CSS files change simultaneously
+// CRITICAL: Throttle increased to 1000ms for CSS-heavy projects
 if (import.meta.hot) {
   let lastHmrTime = 0;
-  const HMR_THROTTLE_MS = 500; // Wait 500ms between accepting HMR updates
+  const HMR_THROTTLE_MS = 1000; // v27.4.0: Increased from 500ms to 1000ms for aggressive throttling
   const pendingUpdates = new Set<string>();
   let processingUpdates = false;
 
@@ -19,7 +20,13 @@ if (import.meta.hot) {
     processingUpdates = true;
     
     const updates = Array.from(pendingUpdates);
+    const batchSize = updates.length;
     pendingUpdates.clear();
+    
+    // v27.4.0: Log only if batch is large (> 5 updates = cascade pattern)
+    if (batchSize > 5) {
+      console.log(`[HMR] ⚠️ Batched ${batchSize} updates (cascade prevented via 1000ms throttle)`);
+    }
     
     // Batch updates: accept all queued changes at once
     for (const update of updates) {

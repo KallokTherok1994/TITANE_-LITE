@@ -86,6 +86,7 @@ export default defineConfig({
     },
     // ✅ v27: Ignore shell scripts from HMR watching
     // ✅ v27.1.1: Optimize CSS HMR (debounce rapid changes)
+    // ✅ v27.4.0: Aggressive debounce to prevent cascades
     watch: {
       ignored: [
         '**/*.sh',
@@ -101,7 +102,7 @@ export default defineConfig({
         '**/src-tauri/**/out/**',
       ],
       awaitWriteFinish: {
-        stabilityThreshold: 300, // v27.3.0: Increased from 200ms to 300ms for CSS stability
+        stabilityThreshold: 500, // v27.4.0: Increased from 300ms to 500ms for aggressive stability
         pollInterval: 100,
       },
     },
