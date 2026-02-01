@@ -21,8 +21,13 @@ import { createLogger } from '@/utils/logger';
 import metricsEngine from './metricsEngine';
 import autoHealEngine from './autoHealEngine';
 import { cognitiveKernel } from './cognitiveKernel';
+import { isDebugMode } from '@/utils/environment';
 
 const logger = createLogger('[META-KERNEL]');
+
+// Throttle pour warnings répétitifs (v27.1.1)
+const warningThrottle = new Map<string, number>();
+const THROTTLE_MS = 60000; // 1 warning max par minute
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES META-KERNEL
@@ -760,12 +765,14 @@ class MetaKernel {
     // Détecter zones de fragilité
     this.detectFragilityZones(observation);
 
-    logger.debug('System observation complete', {
-      stability: observation.stability.toFixed(1),
-      coherence: observation.coherence.toFixed(1),
-      cognitiveLoad: observation.cognitiveLoad.toFixed(1),
-      titaneAlignment: observation.titaneAlignment.toFixed(1),
-    });
+    if (isDebugMode()) {
+      logger.debug('System observation complete', {
+        stability: observation.stability.toFixed(1),
+        coherence: observation.coherence.toFixed(1),
+        cognitiveLoad: observation.cognitiveLoad.toFixed(1),
+        titaneAlignment: observation.titaneAlignment.toFixed(1),
+      });
+    }
   }
 
   private calculateCognitiveLoad(): number {
@@ -831,12 +838,14 @@ class MetaKernel {
     // Mettre à jour l'état du kernel
     this.subKernels[kernel].active = true;
 
-    logger.debug('Kernel activation', {
-      kernel,
-      location,
-      purpose,
-      priority: action.priority,
-    });
+    if (isDebugMode()) {
+      logger.debug('Kernel activation', {
+        kernel,
+        location,
+        purpose,
+        priority: action.priority,
+      });
+    }
 
     return action;
   }
@@ -987,16 +996,30 @@ class MetaKernel {
     }
 
     if (this.titanePrinciples.clarityFlows < 80) {
-      logger.warn('Low flow clarity, activating harmonization', {
-        score: this.titanePrinciples.clarityFlows,
-      });
+      const key = 'low-flow-clarity';
+      const now = Date.now();
+      const lastWarn = warningThrottle.get(key) || 0;
+      
+      if (now - lastWarn > THROTTLE_MS) {
+        logger.warn('Low flow clarity, activating harmonization', {
+          score: this.titanePrinciples.clarityFlows,
+        });
+        warningThrottle.set(key, now);
+      }
       this.activateKernel('cognitive', 'flow-clarification', 85);
     }
 
     if (this.titanePrinciples.robustnessNatural < 80) {
-      logger.warn('Low natural robustness, activating stability', {
-        score: this.titanePrinciples.robustnessNatural,
-      });
+      const key = 'low-robustness';
+      const now = Date.now();
+      const lastWarn = warningThrottle.get(key) || 0;
+      
+      if (now - lastWarn > THROTTLE_MS) {
+        logger.warn('Low natural robustness, activating stability', {
+          score: this.titanePrinciples.robustnessNatural,
+        });
+        warningThrottle.set(key, now);
+      }
       this.activateKernel('stability', 'robustness-reinforcement', 95);
     }
   }
@@ -1123,7 +1146,14 @@ class MetaKernel {
     }
 
     if (this.fragilityZones.length > 0) {
-      logger.warn('Fragility zones detected', { count: this.fragilityZones.length });
+      const key = 'fragility-zones';
+      const now = Date.now();
+      const lastWarn = warningThrottle.get(key) || 0;
+      
+      if (now - lastWarn > THROTTLE_MS) {
+        logger.warn('Fragility zones detected', { count: this.fragilityZones.length });
+        warningThrottle.set(key, now);
+      }
     }
   }
 
@@ -1467,7 +1497,9 @@ class MetaKernel {
    * Exécuter un cycle complet de meta-orchestration
    */
   executeSuperCycle(): SuperConsciousnessReport {
-    logger.debug('Executing super-consciousness cycle');
+    if (isDebugMode()) {
+      logger.debug('Executing super-consciousness cycle');
+    }
 
     // 1. Observer
     this.observe();

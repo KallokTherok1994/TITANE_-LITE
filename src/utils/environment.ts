@@ -54,3 +54,32 @@ export function getLiteProfile(): string | null {
 
   return envVars.TITANE_LITE_PROFILE || null;
 }
+
+/**
+ * Vérifie si le mode debug est activé
+ * 
+ * En mode debug, tous les logs sont affichés.
+ * Sinon, seuls les logs importants (INFO/WARN/ERROR) sont affichés.
+ * 
+ * @returns true si le mode debug est activé
+ */
+export function isDebugMode(): boolean {
+  const envVars = typeof import.meta !== 'undefined' && import.meta.env
+    ? import.meta.env
+    : typeof process !== 'undefined' && process.env
+    ? process.env
+    : {};
+
+  // Active debug si explicitement demandé
+  if (envVars.TITANE_DEBUG === '1' || envVars.TITANE_DEBUG === 'true') {
+    return true;
+  }
+
+  // Désactive debug en mode lite (sauf si explicitement activé)
+  if (isLiteMode() && !envVars.TITANE_DEBUG) {
+    return false;
+  }
+
+  // En développement, debug activé par défaut (sauf en lite mode)
+  return envVars.NODE_ENV !== 'production';
+}

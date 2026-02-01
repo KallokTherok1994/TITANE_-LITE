@@ -29,6 +29,7 @@ import type {
 } from './metaKernel';
 import type { CognitiveProcess as _CognitiveProcess } from './cognitiveKernel';
 import { createLogger } from '@/utils/logger';
+import { isDebugMode } from '@/utils/environment';
 
 const logger = createLogger('SingularityKernel');
 
@@ -512,7 +513,7 @@ class SingularityKernel {
 
   // ═══ CYCLE COGNITIF ═══
   private cognitiveInterval: NodeJS.Timeout | null = null;
-  private readonly COGNITIVE_CYCLE_MS = 10000; // 10 secondes
+  private readonly COGNITIVE_CYCLE_MS = 30000; // 30 secondes (optimisé v27.1.1)
 
   private initialized = false;
 
@@ -800,7 +801,9 @@ class SingularityKernel {
   }
 
   private executeCognitiveCycle(): void {
-    logger.debug('Cognitive cycle...');
+    if (isDebugMode()) {
+      logger.debug('Cognitive cycle...');
+    }
 
     // 1. PERCEVOIR
     this.systemPerception = this.perceiveSystem();
@@ -826,7 +829,9 @@ class SingularityKernel {
     // 8. OPÉRER (Phase F)
     this.operateSingularity();
 
-    logger.debug('Cognitive cycle complete');
+    if (isDebugMode()) {
+      logger.debug('Cognitive cycle complete');
+    }
   }
 
   /**
@@ -1254,7 +1259,9 @@ class SingularityKernel {
   }
 
   private autoOrganize(): void {
-    logger.debug('Auto-organization...');
+    if (isDebugMode()) {
+      logger.debug('Auto-organization...');
+    }
 
     // Réorganiser kernels selon besoin
     metaKernel.executeSuperCycle();
@@ -1303,7 +1310,9 @@ class SingularityKernel {
   }
 
   private autoStabilize(): void {
-    logger.debug('Auto-stabilization...');
+    if (isDebugMode()) {
+      logger.debug('Auto-stabilization...');
+    }
 
     // Activer stability kernel
     metaKernel.activateKernel('stability', 'auto-stabilization', 95);

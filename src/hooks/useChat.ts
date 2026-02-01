@@ -557,6 +557,13 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     copilot: false,
   });
 
+  // ✨ v27.1.1 - Provider readiness cache (5min) to avoid repeated checks
+  const providerReadinessCache = useRef<{
+    timestamp: number;
+    readiness: Record<string, boolean>;
+  } | null>(null);
+  const PROVIDER_CACHE_TTL = 300000; // 5min
+
   const updatePreferredProvider = useCallback((provider: ProviderPreference) => {
     setPreferredProviderState(provider);
     if (typeof window !== 'undefined') {
@@ -624,6 +631,18 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         return;
       }
 
+      // ✨ v27.1.1: Use cache if fresh (< 5min)
+      const now = Date.now();
+      if (providerReadinessCache.current) {
+        const age = now - providerReadinessCache.current.timestamp;
+        if (age < PROVIDER_CACHE_TTL) {
+          chatLogger.debug('Provider readiness check skipped - using cache', {
+            ageSeconds: (age / 1000).toFixed(0),
+          });
+          return;
+        }
+      }
+
       checkInProgress = true;
       try {
         const { openaiProvider, geminiProvider, claudeProvider, copilotProvider } =
@@ -651,13 +670,23 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         const copilotAvailable =
           result3 && result3.status === 'fulfilled' ? result3.value : false;
 
-        setProviderReadiness(prev => ({
-          ...prev,
+        const newReadiness = {
+          auto: true,
+          local: true,
+          ollama: true,
           openai: openaiAvailable,
           gemini: geminiAvailable,
           anthropic: claudeAvailable,
           copilot: copilotAvailable,
-        }));
+        };
+
+        setProviderReadiness(newReadiness);
+
+        // ✨ v27.1.1: Store in cache
+        providerReadinessCache.current = {
+          timestamp: Date.now(),
+          readiness: newReadiness,
+        };
 
         chatLogger.debug('Provider readiness check (v24.3.7 optimized)', {
           openai: openaiAvailable,

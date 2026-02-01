@@ -56,8 +56,8 @@ export class AutoAuditEngine {
   private intervalId: NodeJS.Timeout | null = null;
   private lastReport: AuditReport | null = null;
   private auditHistory: AuditReport[] = [];
-  private readonly SCAN_INTERVAL = 30000; // 30s
-  private readonly MAX_HISTORY = 100; // Garder 100 derniers audits
+  private readonly SCAN_INTERVAL = 120000; // 2min (optimisé v27.1.1)
+  private readonly MAX_HISTORY = 50; // Garder 50 derniers audits (réduit)
 
   /**
    * Démarrer l'audit automatique
@@ -71,7 +71,7 @@ export class AutoAuditEngine {
       return;
     }
 
-    console.log('🔍 [AUTO-AUDIT] Starting automatic audits every 30s');
+    console.log('🔍 [AUTO-AUDIT] Starting automatic audits every 2min (optimized)');
     this.isRunning = true;
 
     // Premier scan immédiat
