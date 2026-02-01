@@ -74,10 +74,10 @@ export default defineConfig({
 
   // 🔧 Server configuration with proper headers + Network + Ollama Proxy
   server: {
-    host: '0.0.0.0', // Listen on all network interfaces for WiFi access
+    host: '127.0.0.1', // Local-only (Tauri dev), avoid network exposure
     port: 4000,
     strictPort: false,
-    cors: true,
+    cors: false,
     open: false, // Don't auto-open browser
     headers: {
       // Vite gère automatiquement Content-Type selon l'extension (.tsx → application/javascript)
@@ -97,6 +97,8 @@ export default defineConfig({
         '**/deployment/**',
         '**/src-tauri/target/**',
         '**/src-tauri/target-*/**',
+        '**/src-tauri/**/out/tauri-codegen-assets/**',
+        '**/src-tauri/**/out/**',
       ],
     },
     hmr: {
