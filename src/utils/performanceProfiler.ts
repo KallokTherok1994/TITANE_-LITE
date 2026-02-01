@@ -7,7 +7,6 @@
  * ═══════════════════════════════════════════════════════════════════
  *   TITANE∞ PERFORMANCE PROFILER v∞
  *
- *   Utilitaire de profilage performance pour TITANE∞
  *   - Mesure temps d'exécution fonctions
  *   - Tracking mémoire
  *   - FPS monitoring
@@ -27,6 +26,8 @@
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
+
+import { isLiteMode } from '@/utils/liteProfile';
 
 export interface PerformanceMeasurement {
   name: string;
@@ -76,7 +77,7 @@ export interface ProfilerConfig {
 // ═══════════════════════════════════════════════════════════════════
 
 const DEFAULT_CONFIG: ProfilerConfig = {
-  enabled: true,
+  enabled: !isLiteMode(),
   maxMeasurements: 1000,
   maxMemorySnapshots: 100,
   fpsBufferSize: 60,

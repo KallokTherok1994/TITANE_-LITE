@@ -47,6 +47,20 @@ pub struct PerformanceConfig {
 
 impl Default for PerformanceConfig {
     fn default() -> Self {
+        let profile = std::env::var("TITANE_LITE_PROFILE")
+            .unwrap_or_else(|_| "ultra_lite".to_string())
+            .to_lowercase();
+
+        if profile == "ultra_lite" || profile == "ultra-lite" || profile == "lite" {
+            return Self::low_power();
+        }
+
+        Self::base_default()
+    }
+}
+
+impl PerformanceConfig {
+    fn base_default() -> Self {
         Self {
             // Scheduler
             max_concurrent_tasks: 16,
@@ -85,9 +99,7 @@ impl Default for PerformanceConfig {
             throttle_on_low_energy: true,
         }
     }
-}
 
-impl PerformanceConfig {
     /// Configuration haute performance (serveur dédié)
     pub fn high_performance() -> Self {
         Self {
@@ -118,7 +130,7 @@ impl PerformanceConfig {
             enable_parallel_omega: false,
             cpu_threshold_percent: 60.0,
             throttle_on_low_energy: true,
-            ..Default::default()
+            ..Self::base_default()
         }
     }
 

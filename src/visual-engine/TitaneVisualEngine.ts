@@ -30,6 +30,7 @@ import type { VisualState, StateVisualConfig } from '@/design-system/visual-stat
 import { effectsOrchestrator } from './EffectsOrchestrator';
 import { osIntegrationBridge } from './OSIntegrationBridge';
 import type { EffectsMetrics as _EffectsMetrics } from './EffectsOrchestrator';
+import { getLiteProfile } from '@/utils/liteProfile';
 
 export interface VisualEngineConfig {
   enableParticles: boolean;
@@ -53,6 +54,56 @@ export interface PerformanceMetrics {
   gpuLoad: number; // v21: GPU load estimation (0-1)
   throttleActive: boolean; // v21: Is throttling active
 }
+
+const applyLiteVisualDefaults = (config: VisualEngineConfig): VisualEngineConfig => {
+  const profile = getLiteProfile();
+  if (profile === 'ultra_lite') {
+    return {
+      ...config,
+      enableParticles: false,
+      enableEffects: false,
+      targetFPS: 30,
+      performanceMode: 'low',
+      enableWebSocket: false,
+      enableOrchestration: false,
+      enableOSIntegration: false,
+      adaptiveFPS: true,
+      debug: false,
+    };
+  }
+
+  if (profile === 'lite') {
+    return {
+      ...config,
+      enableParticles: false,
+      enableEffects: false,
+      targetFPS: 45,
+      performanceMode: 'medium',
+      enableWebSocket: false,
+      enableOrchestration: false,
+      enableOSIntegration: false,
+      adaptiveFPS: true,
+      debug: false,
+    };
+  }
+
+  if (profile === 'balanced') {
+    return {
+      ...config,
+      enableParticles: true,
+      enableEffects: true,
+      targetFPS: Math.min(55, config.targetFPS),
+      performanceMode: 'medium',
+      enableWebSocket: config.enableWebSocket,
+      enableOrchestration: config.enableOrchestration ?? true,
+      enableOSIntegration: config.enableOSIntegration ?? true,
+      adaptiveFPS: true,
+      debug: config.debug ?? false,
+    };
+  }
+
+  return config;
+};
 
 export class TitaneVisualEngine extends EventEmitter {
   private static instance: TitaneVisualEngine | null = null;
@@ -138,6 +189,8 @@ export class TitaneVisualEngine extends EventEmitter {
       debug: false,
       ...config,
     };
+
+    this.config = applyLiteVisualDefaults(this.config);
 
     // Initialize state manager
     this.stateManager = new StateManager('idle');

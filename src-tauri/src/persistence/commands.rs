@@ -286,26 +286,29 @@ pub struct ArchiveValidationDto {
     pub created_at: Option<u64>,
 }
 
-/// Importer une archive
-#[tauri::command]
-pub async fn titan_import_data(path: String, mode: String) -> Result<ImportReportDto, String> {
-    use crate::persistence::backup::{BackupEngine, ImportMode};
+fn resolve_import_mode(mode: &str) -> Result<crate::persistence::backup::ImportMode, String> {
+    use crate::persistence::backup::ImportMode;
 
-    let import_mode = match mode.as_str() {
-        "replace" => ImportMode::Replace,
-        "merge" => ImportMode::Merge,
-        _ => return Err("Mode invalide: 'replace' ou 'merge'".to_string()),
-    };
+    match mode {
+        "replace" => Ok(ImportMode::Replace),
+        "merge" => Ok(ImportMode::Merge),
+        _ => Err("Mode invalide: 'replace' ou 'merge'".to_string()),
+    }
+}
 
+async fn import_archive(path: &str, mode: &str) -> Result<ImportReportDto, String> {
+    use crate::persistence::backup::BackupEngine;
+
+    let import_mode = resolve_import_mode(mode)?;
     let mut engine = BackupEngine::new();
     let report = engine
-        .import(std::path::Path::new(&path), import_mode)
+        .import(std::path::Path::new(path), import_mode)
         .await
         .map_err(|e| e.to_string())?;
 
     Ok(ImportReportDto {
         success: report.success,
-        mode,
+        mode: mode.to_string(),
         files_imported: report.files_imported,
         events_imported: report.events_imported,
         snapshots_imported: report.snapshots_imported,
@@ -314,6 +317,65 @@ pub async fn titan_import_data(path: String, mode: String) -> Result<ImportRepor
         errors: report.errors,
         warnings: report.warnings,
     })
+}
+
+/// Importer une archive
+#[tauri::command]
+pub async fn titan_import_data(path: String, mode: String) -> Result<ImportReportDto, String> {
+    import_archive(&path, &mode).await
+}
+
+/// Importer la dernière archive d'un dossier
+#[tauri::command]
+pub async fn titan_import_latest_from_dir(
+    path: String,
+    mode: String,
+) -> Result<ImportReportDto, String> {
+    use std::path::Path;
+    use std::time::SystemTime;
+
+    let dir = Path::new(&path);
+    if !dir.exists() || !dir.is_dir() {
+        return Err("Dossier d'import introuvable".to_string());
+    }
+
+    let mut entries = tokio::fs::read_dir(dir)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut latest: Option<(std::path::PathBuf, SystemTime)> = None;
+
+    while let Some(entry) = entries.next_entry().await.map_err(|e| e.to_string())? {
+        let path_buf = entry.path();
+        if let Some(file_name) = path_buf.file_name().and_then(|v| v.to_str()) {
+            if !file_name.ends_with(".tar.gz") {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
+        let metadata = entry.metadata().await.map_err(|e| e.to_string())?;
+        let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+
+        match latest {
+            None => latest = Some((path_buf, modified)),
+            Some((_, last_time)) if modified > last_time => {
+                latest = Some((path_buf, modified))
+            }
+            _ => {}
+        }
+    }
+
+    let latest_path = latest
+        .map(|(path_buf, _)| path_buf)
+        .ok_or_else(|| "Aucune archive trouvée".to_string())?;
+
+    let latest_str = latest_path
+        .to_str()
+        .ok_or_else(|| "Chemin d'archive invalide".to_string())?;
+
+    import_archive(latest_str, &mode).await
 }
 
 /// DTO pour le rapport d'import

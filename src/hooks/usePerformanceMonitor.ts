@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { isLiteMode } from '@/utils/liteProfile';
 
 export interface PerformanceMetrics {
   fps: number;
@@ -45,7 +46,8 @@ export interface UsePerformanceMonitorReturn {
 export function usePerformanceMonitor(
   options: UsePerformanceMonitorOptions = {}
 ): UsePerformanceMonitorReturn {
-  const { fpsThreshold = 40, cpuThreshold = 80, enabled = true } = options;
+  const { fpsThreshold = 40, cpuThreshold = 80, enabled } = options;
+  const isEnabled = typeof enabled === 'boolean' ? enabled : !isLiteMode();
 
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     fps: 60,
@@ -65,7 +67,7 @@ export function usePerformanceMonitor(
    * ✨ v24.2.1: Use isRunningRef to prevent RAF scheduling after cleanup
    */
   const trackFPS = useCallback(() => {
-    if (!enabled || !isRunningRef.current) return;
+    if (!isEnabled || !isRunningRef.current) return;
 
     frameCountRef.current++;
     const now = performance.now();
@@ -90,13 +92,13 @@ export function usePerformanceMonitor(
     if (isRunningRef.current) {
       rafIdRef.current = requestAnimationFrame(trackFPS);
     }
-  }, [enabled, fpsThreshold, cpuThreshold]);
+  }, [isEnabled, fpsThreshold, cpuThreshold]);
 
   /**
    * Détection prefers-reduced-motion
    */
   useEffect(() => {
-    if (!enabled) return;
+    if (!isEnabled) return;
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -113,14 +115,14 @@ export function usePerformanceMonitor(
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [enabled]);
+  }, [isEnabled]);
 
   /**
    * Start FPS tracking
    * ✨ v24.2.1: Use isRunningRef for clean RAF lifecycle
    */
   useEffect(() => {
-    if (!enabled) return;
+    if (!isEnabled) return;
 
     isRunningRef.current = true;
     rafIdRef.current = requestAnimationFrame(trackFPS);
@@ -132,7 +134,7 @@ export function usePerformanceMonitor(
         cancelAnimationFrame(rafIdRef.current);
       }
     };
-  }, [enabled, trackFPS]);
+  }, [isEnabled, trackFPS]);
 
   /**
    * Calcul animation config adaptative

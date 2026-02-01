@@ -435,6 +435,12 @@ import { TAURI_COMMANDS } from './core/commands/TAURI_COMMANDS';
 
 // Phase 3 (v19): UI Logger - Isolate frontend logs from backend
 import { logInfo } from './lib/UILogger';
+import {
+  getLiteProfile,
+  getLiteSyncConfig,
+  getLiteSyncImportConfig,
+  isLiteMode,
+} from './utils/liteProfile';
 
 // Initialize Singularity Engine
 // import { singularityEngine } from './core/engines/SINGULARITY_ENGINE'; // DÉSACTIVÉ pour debug
@@ -456,6 +462,14 @@ type RuntimeConfigPayload = {
   ollamaModel: string;
   secretsMode: string;
   geminiConfigured: boolean;
+  liteProfile: string;
+  liteSyncEnabled: boolean;
+  liteSyncIntervalSec: number;
+  liteSyncOutboxDir: string;
+  liteSyncTarget: string;
+  liteSyncImportEnabled: boolean;
+  liteSyncImportDir: string;
+  liteSyncImportMode: string;
   timestamp: number;
 };
 
@@ -464,6 +478,14 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfigPayload = Object.freeze({
   ollamaModel: 'llama3.1',
   secretsMode: 'ephemeral',
   geminiConfigured: false,
+  liteProfile: 'ultra_lite',
+  liteSyncEnabled: true,
+  liteSyncIntervalSec: 900,
+  liteSyncOutboxDir: '',
+  liteSyncTarget: '',
+  liteSyncImportEnabled: false,
+  liteSyncImportDir: '',
+  liteSyncImportMode: 'merge',
   timestamp: Date.now(),
 });
 
@@ -482,6 +504,130 @@ function setRuntimeConfig(config: Partial<RuntimeConfigPayload>): void {
     writable: false,
   });
 }
+
+const liteSyncState = {
+  intervalId: null as ReturnType<typeof setInterval> | null,
+  inFlight: false,
+};
+
+const liteImportState = {
+  intervalId: null as ReturnType<typeof setInterval> | null,
+  inFlight: false,
+};
+
+const buildLiteSyncPath = (baseDir: string): string => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const safeBase = baseDir.replace(/\\/g, '/');
+
+  if (safeBase.endsWith('.tar.gz')) {
+    return safeBase;
+  }
+
+  return `${safeBase}/titane_lite_memory_${timestamp}.tar.gz`;
+};
+
+const runLiteMemorySyncOnce = async (): Promise<void> => {
+  const sync = getLiteSyncConfig();
+  const baseDir = sync.target ?? sync.outboxDir;
+  if (!sync.enabled || !baseDir) {
+    return;
+  }
+
+  if (liteSyncState.inFlight) {
+    return;
+  }
+
+  liteSyncState.inFlight = true;
+  try {
+    const exportPath = buildLiteSyncPath(baseDir);
+    const description = `TITANE_LITE sync push (profile=${getLiteProfile()})`;
+    await safeInvokeTauri<void>(TAURI_COMMANDS.MEMORY_DOCTOR_EXPORT, {
+      path: exportPath,
+      description,
+    });
+    logInfo('[LiteSync] Export mémoire OK', {
+      path: exportPath,
+      target: sync.target ?? 'local-outbox',
+    });
+  } catch (error) {
+    console.warn('[LiteSync] Export mémoire échoué', error);
+  } finally {
+    liteSyncState.inFlight = false;
+  }
+};
+
+const startLiteMemorySync = (): void => {
+  if (!isLiteMode()) {
+    return;
+  }
+
+  const sync = getLiteSyncConfig();
+  const baseDir = sync.target ?? sync.outboxDir;
+  if (!sync.enabled || !baseDir) {
+    console.log('[LiteSync] Désactivé (config manquante)');
+    return;
+  }
+
+  if (liteSyncState.intervalId) {
+    clearInterval(liteSyncState.intervalId);
+  }
+
+  runLiteMemorySyncOnce();
+  liteSyncState.intervalId = setInterval(runLiteMemorySyncOnce, sync.intervalSec * 1000);
+  console.log('[LiteSync] Démarré', {
+    intervalSec: sync.intervalSec,
+    outboxDir: baseDir,
+    target: sync.target ?? 'local-outbox',
+  });
+};
+
+const runLiteMemoryImportOnce = async (): Promise<void> => {
+  const importConfig = getLiteSyncImportConfig();
+  if (!importConfig.enabled || !importConfig.dir) {
+    return;
+  }
+
+  if (liteImportState.inFlight) {
+    return;
+  }
+
+  liteImportState.inFlight = true;
+  try {
+    await safeInvokeTauri<void>(TAURI_COMMANDS.MEMORY_IMPORT_LATEST, {
+      path: importConfig.dir,
+      mode: importConfig.mode,
+    });
+    logInfo('[LiteSync] Import mémoire OK', {
+      dir: importConfig.dir,
+      mode: importConfig.mode,
+    });
+  } catch (error) {
+    console.warn('[LiteSync] Import mémoire échoué', error);
+  } finally {
+    liteImportState.inFlight = false;
+  }
+};
+
+const startLiteMemoryImport = (): void => {
+  const importConfig = getLiteSyncImportConfig();
+  if (!importConfig.enabled || !importConfig.dir) {
+    console.log('[LiteSync] Import désactivé (config manquante)');
+    return;
+  }
+
+  if (liteImportState.intervalId) {
+    clearInterval(liteImportState.intervalId);
+  }
+
+  runLiteMemoryImportOnce();
+  const intervalSec = Math.max(120, getLiteSyncConfig().intervalSec);
+  liteImportState.intervalId = setInterval(runLiteMemoryImportOnce, intervalSec * 1000);
+  console.log('[LiteSync] Import auto démarré', {
+    intervalSec,
+    dir: importConfig.dir,
+    mode: importConfig.mode,
+  });
+};
 
 async function initializeRuntimeConfig(): Promise<void> {
   setRuntimeConfig(DEFAULT_RUNTIME_CONFIG);
@@ -518,14 +664,21 @@ async function initializeRuntimeConfig(): Promise<void> {
         secretsMode: runtimeConfig.secretsMode,
         geminiConfigured: runtimeConfig.geminiConfigured,
         ollamaEndpoint: runtimeConfig.ollamaUrl,
+        liteProfile: runtimeConfig.liteProfile,
       });
+      startLiteMemorySync();
+      startLiteMemoryImport();
     } else {
       console.warn(
         '[RuntimeConfig] Backend returned unexpected payload; keeping defaults'
       );
+      startLiteMemorySync();
+      startLiteMemoryImport();
     }
   } catch (error) {
     console.warn('[RuntimeConfig] Failed to load from backend; using defaults', error);
+    startLiteMemorySync();
+    startLiteMemoryImport();
   }
 }
 

@@ -254,6 +254,28 @@ pub struct PerformanceConfig {
 
 impl Default for PerformanceConfig {
     fn default() -> Self {
+        let profile = std::env::var("TITANE_LITE_PROFILE")
+            .unwrap_or_else(|_| "ultra_lite".to_string())
+            .to_lowercase();
+
+        if profile == "ultra_lite" || profile == "ultra-lite" {
+            return Self {
+                parallel_requests: false,
+                cache_enabled: true,
+                cache_ttl_seconds: 600,
+                max_concurrent_requests: 2,
+            };
+        }
+
+        if profile == "lite" {
+            return Self {
+                parallel_requests: false,
+                cache_enabled: true,
+                cache_ttl_seconds: 600,
+                max_concurrent_requests: 3,
+            };
+        }
+
         Self {
             parallel_requests: true,
             cache_enabled: true,

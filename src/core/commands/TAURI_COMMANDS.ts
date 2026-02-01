@@ -41,6 +41,8 @@ export const TAURI_COMMANDS = {
   MEMORY_GET_ACTIVE_RITUALS: 'get_active_rituals',
   MEMORY_SAVE_CHAT_INTERACTION: 'save_chat_interaction',
   MEMORY_INGEST_FILE: 'memory_ingest_file',
+  MEMORY_DOCTOR_EXPORT: 'titan_memory_doctor_export',
+  MEMORY_IMPORT_LATEST: 'titan_import_latest_from_dir',
 
   // ═══════════════════════════════════════════════════════════════
   // NEXUS - Validation & Graph

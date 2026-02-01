@@ -360,6 +360,8 @@ pub fn get_allowed_commands() -> HashSet<&'static str> {
     commands.insert("end_session");
     commands.insert("get_session_info");
     commands.insert("get_runtime_config");
+    commands.insert("titan_memory_doctor_export");
+    commands.insert("titan_import_latest_from_dir");
 
     // ═══════════════════════════════════════════════════════════════
     // CONFIG HUB

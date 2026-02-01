@@ -1145,6 +1145,7 @@ fn main() {
             persistence::commands::titan_memory_doctor_heal,
             persistence::commands::titan_memory_doctor_compact,
             persistence::commands::titan_memory_doctor_export,
+            persistence::commands::titan_import_latest_from_dir,
 
             // Onboarding commands
             onboarding::is_onboarding_complete,

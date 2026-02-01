@@ -187,6 +187,8 @@ export const ALLOWED_COMMANDS = new Set<string>([
   'memory_get_active_rituals',
   'memory_get_timeline',
   'memory_ingest_file',
+  'titan_memory_doctor_export',
+  'titan_import_latest_from_dir',
   'import_file',
   'get_all_files',
   'get_files_by_category',

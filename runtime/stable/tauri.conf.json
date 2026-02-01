@@ -95,6 +95,8 @@
             { "command": "get_knowledge" },
             { "command": "get_active_rituals" },
             { "command": "save_chat_interaction" },
+            { "command": "titan_memory_doctor_export" },
+            { "command": "titan_import_latest_from_dir" },
             { "command": "memory_ingest_file" },
             { "command": "validate_nexus" },
             { "command": "get_nexus_graph" },
