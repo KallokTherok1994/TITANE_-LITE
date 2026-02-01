@@ -65,8 +65,7 @@ export { useTitaneCore } from './useTitaneCore';
 export { useMemoryCore } from './useMemoryCore';
 export { useLivingEngines } from './useLivingEngines';
 export { useEngineSubscription } from './useEngineSubscription';
-export { useAIChatStreaming } from './useAIChatStreaming';
-// REMOVED v24.8: useBatchCommands (dead code, 0 imports)
+// REMOVED v40.0: useAIChatStreaming (unused, 0 imports)
 export { useFileOperations } from './useFileOperations';
 export { useRAG } from './useRAG';
 export type { LivingEnginesState } from './useLivingEngines';
@@ -100,20 +99,13 @@ export type {
 
 // Hooks spécialisés (isolation)
 export { useChatCore } from './useChatCore';
-export { useChatUI } from './useChatUI';
-export { useChatStreaming } from './useChatStreaming';
+// REMOVED v40.0: useChatUI, useChatStreaming, useProviderStatus (unused, 0 imports)
 export { useChatMemory } from './useChatMemory';
-export { useProviderStatus } from './useProviderStatus';
 
 // Types
 export type { UseChatCoreOptions, UseChatCoreReturn } from './useChatCore';
-export type { UseChatUIOptions, UseChatUIReturn } from './useChatUI';
-export type { UseChatStreamingOptions, UseChatStreamingReturn } from './useChatStreaming';
+// REMOVED v40.0: Type exports for useChatUI, useChatStreaming, useProviderStatus
 export type { UseChatMemoryOptions, UseChatMemoryReturn } from './useChatMemory';
-export type {
-  UseProviderStatusOptions,
-  UseProviderStatusReturn,
-} from './useProviderStatus';
 
 // ═══════════════════════════════════════════════════════════════
 // v15 - Refactored Hooks (TauriClient integration)
@@ -135,9 +127,7 @@ export type {
   UseEngineVitalsReturn,
 } from './useEngineVitals';
 
-// System Monitor (NOUVEAU v15 - Combine vitals + engines)
-export { useSystemMonitor } from './useSystemMonitor';
-export type { UseSystemMonitorOptions, UseSystemMonitorReturn } from './useSystemMonitor';
+// REMOVED v40.0: useSystemMonitor (unused, 0 imports)
 
 // Performance Monitor (NOUVEAU v15 - FPS tracking)
 export { usePerformanceMonitor } from './usePerformanceMonitor';
