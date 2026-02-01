@@ -43,6 +43,12 @@ function workboxPlugin(): Plugin {
           swDest: swDestAbs,
           globDirectory: outDirAbs,
           globPatterns: ['assets/**/*.{js,css,woff2}', 'index.html'],
+          globIgnores: [
+            // ✅ Phase 11.1: Exclude ONNX runtime from Service Worker precaching
+            // These are only loaded on-demand when AI features are used
+            'assets/onnxruntime*.js',
+            'assets/*-onnxruntime*.js',
+          ],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB max
         });
 
