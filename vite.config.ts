@@ -95,6 +95,8 @@ export default defineConfig({
         '**/runtime/**',
         '**/logs/**',
         '**/deployment/**',
+        '**/src-tauri/target/**',
+        '**/src-tauri/target-*/**',
       ],
     },
     hmr: {
