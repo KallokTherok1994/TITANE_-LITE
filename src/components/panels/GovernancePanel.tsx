@@ -25,7 +25,6 @@ import { useAdaptiveFPS } from '@/hooks/useAdaptiveFPS';
 import { useEffects } from '@/hooks/useEffects';
 import { UIIntegrityChecker } from '@/visual-engine/UIIntegrityChecker';
 import type { IntegrityReport, Anomaly } from '@/visual-engine/UIIntegrityChecker';
-import '@/styles/animations.css';
 
 type IntegrityCheckerLike = {
   runCheck: () => Promise<IntegrityReport>;

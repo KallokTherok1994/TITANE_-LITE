@@ -19,7 +19,6 @@ import { useParticles } from '@/hooks/useParticles';
 import { useVisualStateStore } from '@/stores/visualStateStore';
 import { usePanelState } from '@/hooks/usePanelState';
 import { usePanelsStore } from '@/stores/panelsStore';
-import '@/styles/animations.css';
 
 export interface ChatPanelProps {
   className?: string;

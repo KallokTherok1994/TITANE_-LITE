@@ -12,7 +12,6 @@
 import React from 'react';
 import { useVisualState } from '@/hooks/useVisualState';
 import { useVisualStateStore } from '@/stores/visualStateStore';
-import '@/styles/animations.css';
 
 export interface HealingPhase {
   id: string;

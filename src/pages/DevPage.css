@@ -3,8 +3,7 @@
  * © 2025 Kevin Thibault — Licence MIT
  */
 
-/* Import Tech Effects */
-@import '../styles/tech-effects.css';
+/* Import Tech Effects (global via src/index.css) */
 
 /* ============================================================================
  * Variables
