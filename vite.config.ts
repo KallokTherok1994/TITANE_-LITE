@@ -85,6 +85,7 @@ export default defineConfig({
       'X-Frame-Options': 'SAMEORIGIN',
     },
     // ✅ v27: Ignore shell scripts from HMR watching
+    // ✅ v27.1.1: Optimize CSS HMR (debounce rapid changes)
     watch: {
       ignored: [
         '**/*.sh',
@@ -95,6 +96,10 @@ export default defineConfig({
         '**/logs/**',
         '**/deployment/**',
       ],
+    },
+    hmr: {
+      // Throttle rapid CSS updates to prevent cascading HMR loops
+      overlay: true,
     },
     proxy: {
       // ✅ v27: Proxy Ollama API to avoid CORS issues (port 11435 alternative)
