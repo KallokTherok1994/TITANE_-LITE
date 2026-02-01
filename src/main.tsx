@@ -6,6 +6,55 @@
  * See LICENSE.md for the full legal terms (FR/EN).
  */
 
+// ✅ v27.3.0: HMR BURST PREVENTION - Client-side deduplication
+// Prevents cascading reloads when multiple CSS files change simultaneously
+if (import.meta.hot) {
+  let lastHmrTime = 0;
+  const HMR_THROTTLE_MS = 500; // Wait 500ms between accepting HMR updates
+  const pendingUpdates = new Set<string>();
+  let processingUpdates = false;
+
+  const processQueuedUpdates = async () => {
+    if (processingUpdates || pendingUpdates.size === 0) return;
+    processingUpdates = true;
+    
+    const updates = Array.from(pendingUpdates);
+    pendingUpdates.clear();
+    
+    // Batch updates: accept all queued changes at once
+    for (const update of updates) {
+      try {
+        await import.meta.hot?.accept();
+      } catch (e) {
+        console.log(`[HMR] Update ${update} failed (expected), page will reload`);
+      }
+    }
+    
+    lastHmrTime = Date.now();
+    processingUpdates = false;
+    
+    // Check if more updates arrived while processing
+    if (pendingUpdates.size > 0) {
+      setTimeout(processQueuedUpdates, HMR_THROTTLE_MS);
+    }
+  };
+
+  import.meta.hot.on('custom:hmr-update', (data: any) => {
+    pendingUpdates.add(data.event || 'unknown');
+    
+    const timeSinceLastUpdate = Date.now() - lastHmrTime;
+    if (timeSinceLastUpdate < HMR_THROTTLE_MS) {
+      // Queue for batch processing
+      if (!processingUpdates) {
+        setTimeout(processQueuedUpdates, HMR_THROTTLE_MS - timeSinceLastUpdate);
+      }
+    } else {
+      // Process immediately (enough time has passed)
+      processQueuedUpdates();
+    }
+  });
+}
+
 // 🛡️ Type augmentation for Sentry and Monitoring on window
 declare global {
   interface Window {

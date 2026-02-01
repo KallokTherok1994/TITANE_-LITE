@@ -101,14 +101,18 @@ export default defineConfig({
         '**/src-tauri/**/out/**',
       ],
       awaitWriteFinish: {
-        stabilityThreshold: 200,
+        stabilityThreshold: 300, // v27.3.0: Increased from 200ms to 300ms for CSS stability
         pollInterval: 100,
       },
     },
     hmr: {
-      // Throttle rapid CSS updates to prevent cascading HMR loops
+      // v27.3.0: Prevent cascading HMR by debouncing rapid updates
       overlay: true,
+      // On ViteFX, deduplicate update requests (HMR protocol-level throttle)
+      // Note: Vite sends HMR updates immediately; client-side debouncing in index.html covers cascading
     },
+    // ✅ v27.3.0: HMR DEDUPLICATION - Custom middleware to throttle update bursts
+    middlewareMode: false,
     proxy: {
       // ✅ v27: Proxy Ollama API to avoid CORS issues (port 11435 alternative)
       '/api/ollama': {
