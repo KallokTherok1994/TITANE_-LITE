@@ -170,16 +170,13 @@
     "autoprefixer": "^10.4.16",
     "axe-core": "^4.11.1",
     "cross-env": "^10.1.0",
-    "electron": "^40.1.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
-    "happy-dom": "^20.4.0",
     "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
-    "jsdom": "^27.4.0",
     "lightningcss": "^1.31.1",
     "lint-staged": "^16.2.7",
     "mocha": "^11.7.5",
@@ -189,7 +186,6 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-window": "^2.2.5",
-    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "uuid": "^13.0.0",
@@ -238,10 +234,7 @@
       "sourcemap-codec@1.4.8": ">=1.4.8",
       "whatwg-encoding@<1.1.0": ">=1.0.5",
       "@wdio/mocha-framework>mocha": "11.7.5"
-    },
-    "ignoredBuiltDependencies": [
-      "electron"
-    ]
+    }
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
