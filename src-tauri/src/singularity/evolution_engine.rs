@@ -1,0 +1,872 @@
+// ═══════════════════════════════════════════════════════════════
+//   TITANE∞ v20.1Ω — SINGULARITY OS - EVOLUTION ENGINE
+//   Super Prompt #13: Self-improvement and auto-evolution
+//   Learns from interactions, improves models, tracks growth
+// ═══════════════════════════════════════════════════════════════
+
+use super::brain_state::{ConversationBrainState, ConversationMode};
+use std::collections::HashMap;
+
+/// Evolution Engine - Manages self-improvement
+#[derive(Debug, Clone)]
+pub struct EvolutionEngine {
+    /// Current evolution level
+    level: f32,
+    /// Experience points
+    xp: f32,
+    /// XP needed for next level
+    xp_to_next: f32,
+    /// Evolution metrics
+    metrics: EvolutionMetrics,
+    /// Pattern history for learning
+    patterns: PatternHistory,
+    /// Evolution rate (how fast it learns)
+    evolution_rate: f32,
+    /// Maximum level cap
+    max_level: f32,
+}
+
+/// Evolution metrics tracking
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct EvolutionMetrics {
+    /// Total interactions processed
+    pub total_interactions: u64,
+    /// Successful interactions (implicit feedback)
+    pub successful_interactions: u64,
+    /// Average coherence score
+    pub avg_coherence: f32,
+    /// Average style stability
+    pub avg_style_stability: f32,
+    /// Mode distribution effectiveness
+    pub mode_effectiveness: HashMap<String, f32>,
+    /// Memory relevance improvement
+    pub memory_relevance_trend: Vec<f32>,
+    /// Response latency trend (ms)
+    pub latency_trend: Vec<u128>,
+    /// Cognitive drift score (lower is better)
+    pub cognitive_drift: f32,
+}
+
+/// Pattern history for learning
+#[derive(Debug, Clone, Default)]
+pub struct PatternHistory {
+    /// Successful patterns
+    pub successful: Vec<SuccessPattern>,
+    /// Maximum patterns to keep
+    pub max_patterns: usize,
+}
+
+/// A successful interaction pattern
+#[derive(Debug, Clone)]
+pub struct SuccessPattern {
+    pub mode: ConversationMode,
+    pub coherence: f32,
+    pub style_stability: f32,
+    pub memory_relevance: f32,
+    pub latency_ms: u128,
+    pub timestamp: i64,
+}
+
+impl Default for EvolutionEngine {
+    fn default() -> Self {
+        Self {
+            level: 1.0,
+            xp: 0.0,
+            xp_to_next: 100.0,
+            metrics: EvolutionMetrics::default(),
+            patterns: PatternHistory {
+                successful: Vec::new(),
+                max_patterns: 100,
+            },
+            evolution_rate: 0.001,
+            max_level: 10.0,
+        }
+    }
+}
+
+impl EvolutionEngine {
+    /// Create new evolution engine
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Create at specific level
+    pub fn at_level(level: f32) -> Self {
+        let mut engine = Self::default();
+        engine.level = level.clamp(1.0, engine.max_level);
+        engine
+    }
+
+    /// Update from interaction
+    pub fn update(&mut self, state: &ConversationBrainState, latency_ms: u128) {
+        // Track interaction
+        self.metrics.total_interactions += 1;
+
+        // Update coherence average
+        self.update_coherence_avg(state.coherence_score);
+
+        // Update latency trend
+        self.metrics.latency_trend.push(latency_ms);
+        if self.metrics.latency_trend.len() > 100 {
+            self.metrics.latency_trend.remove(0);
+        }
+
+        // Calculate XP gain
+        let xp_gain = self.calculate_xp_gain(state, latency_ms);
+        self.add_xp(xp_gain);
+
+        // Check for successful pattern
+        if self.is_successful_interaction(state, latency_ms) {
+            self.record_success_pattern(state, latency_ms);
+            self.metrics.successful_interactions += 1;
+        }
+
+        // Update mode effectiveness
+        let mode_key = format!("{:?}", state.mode);
+        let effectiveness = self.calculate_mode_effectiveness(state);
+        self.metrics
+            .mode_effectiveness
+            .entry(mode_key)
+            .and_modify(|e| *e = (*e + effectiveness) / 2.0)
+            .or_insert(effectiveness);
+
+        // Update evolution level
+        self.level = (self.level + self.evolution_rate).min(self.max_level);
+
+        // Update cognitive drift
+        self.update_cognitive_drift(state);
+    }
+
+    /// Calculate XP gain from interaction
+    fn calculate_xp_gain(&self, state: &ConversationBrainState, latency_ms: u128) -> f32 {
+        let mut xp = 1.0; // Base XP
+
+        // Bonus for high coherence
+        if state.coherence_score > 0.9 {
+            xp += 2.0;
+        } else if state.coherence_score > 0.8 {
+            xp += 1.0;
+        }
+
+        // Bonus for fast response
+        if latency_ms < 20 {
+            xp += 1.5;
+        } else if latency_ms < 30 {
+            xp += 0.5;
+        }
+
+        // Bonus for complex mode handling
+        match state.mode {
+            ConversationMode::Meta | ConversationMode::Cognitive => xp += 1.0,
+            ConversationMode::Creative => xp += 0.5,
+            _ => {}
+        }
+
+        xp * self.evolution_rate
+    }
+
+    /// Add XP and handle leveling
+    fn add_xp(&mut self, xp: f32) {
+        self.xp += xp;
+
+        // Level up check
+        while self.xp >= self.xp_to_next && self.level < self.max_level {
+            self.xp -= self.xp_to_next;
+            self.level += 0.1;
+            self.xp_to_next *= 1.2; // Increasing XP requirements
+        }
+    }
+
+    /// Update coherence average
+    fn update_coherence_avg(&mut self, coherence: f32) {
+        let count = self.metrics.total_interactions as f32;
+        self.metrics.avg_coherence =
+            (self.metrics.avg_coherence * (count - 1.0) + coherence) / count;
+    }
+
+    /// Check if interaction was successful
+    fn is_successful_interaction(&self, state: &ConversationBrainState, latency_ms: u128) -> bool {
+        state.coherence_score > 0.85 && latency_ms < 30
+    }
+
+    /// Record successful pattern
+    fn record_success_pattern(&mut self, state: &ConversationBrainState, latency_ms: u128) {
+        let pattern = SuccessPattern {
+            mode: state.mode,
+            coherence: state.coherence_score,
+            style_stability: 0.9, // Would come from style controller
+            memory_relevance: state.context.relevance_score,
+            latency_ms,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+        };
+
+        self.patterns.successful.push(pattern);
+
+        // Trim if too many
+        if self.patterns.successful.len() > self.patterns.max_patterns {
+            self.patterns.successful.remove(0);
+        }
+    }
+
+    /// Calculate mode effectiveness
+    fn calculate_mode_effectiveness(&self, state: &ConversationBrainState) -> f32 {
+        // Based on coherence and context relevance
+        (state.coherence_score + state.context.relevance_score) / 2.0
+    }
+
+    /// Update cognitive drift metric
+    fn update_cognitive_drift(&mut self, state: &ConversationBrainState) {
+        // Drift increases with inconsistency, decreases with stability
+        let target_drift = 1.0 - state.coherence_score;
+        self.metrics.cognitive_drift = self.metrics.cognitive_drift * 0.9 + target_drift * 0.1;
+    }
+
+    /// Get current level
+    pub fn level(&self) -> f32 {
+        self.level
+    }
+
+    /// Get current XP
+    pub fn xp(&self) -> f32 {
+        self.xp
+    }
+
+    /// Get XP progress percentage
+    pub fn xp_progress(&self) -> f32 {
+        (self.xp / self.xp_to_next) * 100.0
+    }
+
+    /// Get metrics
+    pub fn metrics(&self) -> &EvolutionMetrics {
+        &self.metrics
+    }
+
+    /// Get success rate
+    pub fn success_rate(&self) -> f32 {
+        if self.metrics.total_interactions == 0 {
+            return 1.0;
+        }
+        self.metrics.successful_interactions as f32 / self.metrics.total_interactions as f32
+    }
+
+    /// Get average latency
+    pub fn avg_latency(&self) -> u128 {
+        if self.metrics.latency_trend.is_empty() {
+            return 0;
+        }
+        self.metrics.latency_trend.iter().sum::<u128>() / self.metrics.latency_trend.len() as u128
+    }
+
+    /// Get evolution snapshot
+    pub fn snapshot(&self) -> EvolutionSnapshot {
+        EvolutionSnapshot {
+            level: self.level,
+            xp: self.xp,
+            xp_to_next: self.xp_to_next,
+            xp_progress: self.xp_progress(),
+            total_interactions: self.metrics.total_interactions,
+            success_rate: self.success_rate(),
+            avg_coherence: self.metrics.avg_coherence,
+            avg_latency_ms: self.avg_latency(),
+            cognitive_drift: self.metrics.cognitive_drift,
+            pattern_count: self.patterns.successful.len(),
+        }
+    }
+
+    /// Apply learnings from patterns
+    pub fn apply_learnings(&self) -> LearningInsights {
+        let mut insights = LearningInsights::default();
+
+        if self.patterns.successful.is_empty() {
+            return insights;
+        }
+
+        // Analyze successful modes
+        let mut mode_counts: HashMap<ConversationMode, usize> = HashMap::new();
+        let mut total_coherence = 0.0;
+        let mut total_latency = 0u128;
+
+        for pattern in &self.patterns.successful {
+            *mode_counts.entry(pattern.mode).or_insert(0) += 1;
+            total_coherence += pattern.coherence;
+            total_latency += pattern.latency_ms;
+        }
+
+        // Best mode
+        let best_mode = mode_counts
+            .iter()
+            .max_by_key(|(_, count)| *count)
+            .map(|(mode, _)| *mode);
+
+        insights.recommended_mode = best_mode;
+        insights.avg_success_coherence = total_coherence / self.patterns.successful.len() as f32;
+        insights.avg_success_latency = total_latency / self.patterns.successful.len() as u128;
+
+        // Recommendations
+        if insights.avg_success_coherence > 0.9 {
+            insights
+                .recommendations
+                .push("Maintenir les patterns actuels".to_string());
+        }
+
+        if self.metrics.cognitive_drift > 0.2 {
+            insights
+                .recommendations
+                .push("Réduire la dérive cognitive".to_string());
+        }
+
+        insights
+    }
+
+    /// Reset evolution (keep level, reset metrics)
+    pub fn soft_reset(&mut self) {
+        self.metrics = EvolutionMetrics::default();
+        self.patterns.successful.clear();
+    }
+
+    /// Full reset
+    pub fn hard_reset(&mut self) {
+        *self = Self::default();
+    }
+
+    /// Set evolution rate
+    pub fn set_evolution_rate(&mut self, rate: f32) {
+        self.evolution_rate = rate.clamp(0.0001, 0.1);
+    }
+}
+
+/// Evolution snapshot for reporting
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct EvolutionSnapshot {
+    pub level: f32,
+    pub xp: f32,
+    pub xp_to_next: f32,
+    pub xp_progress: f32,
+    pub total_interactions: u64,
+    pub success_rate: f32,
+    pub avg_coherence: f32,
+    pub avg_latency_ms: u128,
+    pub cognitive_drift: f32,
+    pub pattern_count: usize,
+}
+
+/// Learning insights from pattern analysis
+#[derive(Debug, Clone, Default)]
+pub struct LearningInsights {
+    pub recommended_mode: Option<ConversationMode>,
+    pub avg_success_coherence: f32,
+    pub avg_success_latency: u128,
+    pub recommendations: Vec<String>,
+}
+
+// ═══════════════════════════════════════════════════════════════
+//   TESTS
+// ═══════════════════════════════════════════════════════════════
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_evolution_engine_creation() {
+        let engine = EvolutionEngine::new();
+        assert_eq!(engine.level(), 1.0);
+        assert_eq!(engine.xp(), 0.0);
+    }
+
+    #[test]
+    fn test_update_interaction() {
+        let mut engine = EvolutionEngine::new();
+        let state = ConversationBrainState::default();
+
+        engine.update(&state, 15);
+
+        assert_eq!(engine.metrics.total_interactions, 1);
+        assert!(engine.xp() > 0.0);
+    }
+
+    #[test]
+    fn test_success_tracking() {
+        let mut engine = EvolutionEngine::new();
+        let mut state = ConversationBrainState::default();
+        state.coherence_score = 0.95;
+
+        engine.update(&state, 15); // Fast, high coherence = success
+
+        assert_eq!(engine.metrics.successful_interactions, 1);
+    }
+
+    #[test]
+    fn test_xp_progress() {
+        let mut engine = EvolutionEngine::new();
+        engine.add_xp(50.0);
+
+        let progress = engine.xp_progress();
+        assert_eq!(progress, 50.0); // 50 out of 100
+    }
+
+    #[test]
+    fn test_snapshot() {
+        let engine = EvolutionEngine::new();
+        let snapshot = engine.snapshot();
+
+        assert_eq!(snapshot.level, 1.0);
+        assert_eq!(snapshot.total_interactions, 0);
+    }
+
+    #[test]
+    fn test_learning_insights() {
+        let mut engine = EvolutionEngine::new();
+
+        // Add some patterns
+        for _ in 0..5 {
+            let mut state = ConversationBrainState::default();
+            state.coherence_score = 0.92;
+            state.mode = ConversationMode::Expert;
+            engine.update(&state, 18);
+        }
+
+        let insights = engine.apply_learnings();
+        assert!(insights.recommended_mode.is_some());
+        assert!(insights.avg_success_coherence > 0.9);
+    }
+
+    #[test]
+    fn test_evolution_at_level() {
+        let engine = EvolutionEngine::at_level(5.0);
+        assert_eq!(engine.level(), 5.0);
+    }
+
+    #[test]
+    fn test_success_rate() {
+        let mut engine = EvolutionEngine::new();
+
+        // One success, one failure
+        let mut success_state = ConversationBrainState::default();
+        success_state.coherence_score = 0.95;
+        engine.update(&success_state, 15);
+
+        let mut fail_state = ConversationBrainState::default();
+        fail_state.coherence_score = 0.5;
+        engine.update(&fail_state, 100);
+
+        let rate = engine.success_rate();
+        assert!(rate > 0.0 && rate < 1.0);
+    }
+
+    #[test]
+    fn test_avg_latency() {
+        let mut engine = EvolutionEngine::new();
+        let state = ConversationBrainState::default();
+
+        engine.update(&state, 10);
+        engine.update(&state, 20);
+        engine.update(&state, 30);
+
+        let avg = engine.avg_latency();
+        assert_eq!(avg, 20);
+    }
+
+    #[test]
+    fn test_avg_latency_empty() {
+        let engine = EvolutionEngine::new();
+        assert_eq!(engine.avg_latency(), 0);
+    }
+
+    #[test]
+    fn test_soft_reset() {
+        let mut engine = EvolutionEngine::new();
+        let state = ConversationBrainState::default();
+
+        engine.update(&state, 15);
+        engine.update(&state, 20);
+
+        assert!(engine.metrics().total_interactions > 0);
+
+        engine.soft_reset();
+
+        assert_eq!(engine.metrics().total_interactions, 0);
+        assert!(engine.level() > 1.0); // Level preserved
+    }
+
+    #[test]
+    fn test_hard_reset() {
+        let mut engine = EvolutionEngine::at_level(5.0);
+        let state = ConversationBrainState::default();
+
+        engine.update(&state, 15);
+
+        engine.hard_reset();
+
+        assert_eq!(engine.level(), 1.0);
+        assert_eq!(engine.xp(), 0.0);
+        assert_eq!(engine.metrics().total_interactions, 0);
+    }
+
+    #[test]
+    fn test_set_evolution_rate() {
+        let mut engine = EvolutionEngine::new();
+
+        engine.set_evolution_rate(0.05);
+        assert_eq!(engine.evolution_rate, 0.05);
+
+        // Test clamping
+        engine.set_evolution_rate(0.5);
+        assert_eq!(engine.evolution_rate, 0.1);
+
+        engine.set_evolution_rate(0.00001);
+        assert_eq!(engine.evolution_rate, 0.0001);
+    }
+
+    #[test]
+    fn test_level_clamping() {
+        let engine = EvolutionEngine::at_level(100.0);
+        assert_eq!(engine.level(), 10.0); // Max level is 10.0
+
+        let engine2 = EvolutionEngine::at_level(-5.0);
+        assert_eq!(engine2.level(), 1.0); // Min level is 1.0
+    }
+
+    #[test]
+    fn test_evolution_metrics_default() {
+        let metrics = EvolutionMetrics::default();
+
+        assert_eq!(metrics.total_interactions, 0);
+        assert_eq!(metrics.successful_interactions, 0);
+        assert_eq!(metrics.avg_coherence, 0.0);
+        assert!(metrics.mode_effectiveness.is_empty());
+    }
+
+    #[test]
+    fn test_pattern_history_limit() {
+        let mut engine = EvolutionEngine::new();
+        engine.patterns.max_patterns = 5;
+
+        let mut state = ConversationBrainState::default();
+        state.coherence_score = 0.95;
+
+        // Add more patterns than max
+        for _ in 0..10 {
+            engine.update(&state, 15);
+        }
+
+        assert!(engine.patterns.successful.len() <= 5);
+    }
+
+    #[test]
+    fn test_mode_effectiveness_tracking() {
+        let mut engine = EvolutionEngine::new();
+        let mut state = ConversationBrainState::default();
+        state.mode = ConversationMode::Expert;
+        state.coherence_score = 0.9;
+
+        engine.update(&state, 20);
+
+        let mode_key = format!("{:?}", ConversationMode::Expert);
+        assert!(engine.metrics().mode_effectiveness.contains_key(&mode_key));
+    }
+
+    #[test]
+    fn test_cognitive_drift_update() {
+        let mut engine = EvolutionEngine::new();
+
+        // High coherence should lower drift
+        let mut state = ConversationBrainState::default();
+        state.coherence_score = 0.99;
+        engine.update(&state, 10);
+
+        let drift1 = engine.metrics().cognitive_drift;
+
+        // Low coherence should increase drift
+        state.coherence_score = 0.5;
+        engine.update(&state, 10);
+
+        let drift2 = engine.metrics().cognitive_drift;
+        assert!(drift2 > drift1);
+    }
+
+    #[test]
+    fn test_empty_learnings() {
+        let engine = EvolutionEngine::new();
+        let insights = engine.apply_learnings();
+
+        assert!(insights.recommended_mode.is_none());
+        assert_eq!(insights.avg_success_coherence, 0.0);
+    }
+
+    #[test]
+    fn test_evolution_engine_clone() {
+        let engine = EvolutionEngine::at_level(3.0);
+        let cloned = engine.clone();
+        assert_eq!(cloned.level(), engine.level());
+        assert_eq!(cloned.xp(), engine.xp());
+    }
+
+    #[test]
+    fn test_evolution_engine_debug() {
+        let engine = EvolutionEngine::new();
+        let debug_str = format!("{:?}", engine);
+        assert!(debug_str.contains("EvolutionEngine"));
+    }
+
+    #[test]
+    fn test_evolution_metrics_clone() {
+        let mut metrics = EvolutionMetrics::default();
+        metrics.total_interactions = 100;
+        metrics.avg_coherence = 0.85;
+        let cloned = metrics.clone();
+        assert_eq!(cloned.total_interactions, 100);
+        assert_eq!(cloned.avg_coherence, 0.85);
+    }
+
+    #[test]
+    fn test_evolution_metrics_debug() {
+        let metrics = EvolutionMetrics::default();
+        let debug_str = format!("{:?}", metrics);
+        assert!(debug_str.contains("EvolutionMetrics"));
+    }
+
+    #[test]
+    fn test_pattern_history_default() {
+        let history = PatternHistory::default();
+        assert!(history.successful.is_empty());
+        assert_eq!(history.max_patterns, 0);
+    }
+
+    #[test]
+    fn test_pattern_history_clone() {
+        let mut history = PatternHistory::default();
+        history.max_patterns = 50;
+        let cloned = history.clone();
+        assert_eq!(cloned.max_patterns, 50);
+    }
+
+    #[test]
+    fn test_success_pattern_clone() {
+        let pattern = SuccessPattern {
+            mode: ConversationMode::Expert,
+            coherence: 0.95,
+            style_stability: 0.9,
+            memory_relevance: 0.8,
+            latency_ms: 15,
+            timestamp: 123456789,
+        };
+        let cloned = pattern.clone();
+        assert_eq!(cloned.coherence, 0.95);
+        assert_eq!(cloned.latency_ms, 15);
+    }
+
+    #[test]
+    fn test_success_pattern_debug() {
+        let pattern = SuccessPattern {
+            mode: ConversationMode::Coach,
+            coherence: 0.88,
+            style_stability: 0.85,
+            memory_relevance: 0.75,
+            latency_ms: 20,
+            timestamp: 987654321,
+        };
+        let debug_str = format!("{:?}", pattern);
+        assert!(debug_str.contains("SuccessPattern"));
+    }
+
+    #[test]
+    fn test_evolution_snapshot_clone() {
+        let snapshot = EvolutionSnapshot {
+            level: 2.5,
+            xp: 50.0,
+            xp_to_next: 120.0,
+            xp_progress: 41.67,
+            total_interactions: 200,
+            success_rate: 0.85,
+            avg_coherence: 0.9,
+            avg_latency_ms: 18,
+            cognitive_drift: 0.05,
+            pattern_count: 15,
+        };
+        let cloned = snapshot.clone();
+        assert_eq!(cloned.level, 2.5);
+        assert_eq!(cloned.pattern_count, 15);
+    }
+
+    #[test]
+    fn test_evolution_snapshot_debug() {
+        let engine = EvolutionEngine::new();
+        let snapshot = engine.snapshot();
+        let debug_str = format!("{:?}", snapshot);
+        assert!(debug_str.contains("EvolutionSnapshot"));
+    }
+
+    #[test]
+    fn test_learning_insights_default() {
+        let insights = LearningInsights::default();
+        assert!(insights.recommended_mode.is_none());
+        assert_eq!(insights.avg_success_coherence, 0.0);
+        assert_eq!(insights.avg_success_latency, 0);
+        assert!(insights.recommendations.is_empty());
+    }
+
+    #[test]
+    fn test_learning_insights_clone() {
+        let mut insights = LearningInsights::default();
+        insights
+            .recommendations
+            .push("Test recommendation".to_string());
+        let cloned = insights.clone();
+        assert_eq!(cloned.recommendations.len(), 1);
+    }
+
+    #[test]
+    fn test_xp_level_up() {
+        let mut engine = EvolutionEngine::new();
+        // Add enough XP to trigger level up
+        for _ in 0..1000 {
+            let mut state = ConversationBrainState::default();
+            state.coherence_score = 0.95;
+            state.mode = ConversationMode::Meta;
+            engine.update(&state, 10);
+        }
+        // Level should have increased
+        assert!(engine.level() > 1.0);
+    }
+
+    #[test]
+    fn test_success_rate_empty() {
+        let engine = EvolutionEngine::new();
+        assert_eq!(engine.success_rate(), 1.0); // Default when no interactions
+    }
+
+    #[test]
+    fn test_metrics_access() {
+        let mut engine = EvolutionEngine::new();
+        let state = ConversationBrainState::default();
+        engine.update(&state, 20);
+
+        let metrics = engine.metrics();
+        assert_eq!(metrics.total_interactions, 1);
+    }
+
+    #[test]
+    fn test_latency_trend_trimming() {
+        let mut engine = EvolutionEngine::new();
+        let state = ConversationBrainState::default();
+
+        // Add more than 100 latency entries
+        for i in 0..150 {
+            engine.update(&state, i as u128);
+        }
+
+        // Should be trimmed to 100
+        assert!(engine.metrics().latency_trend.len() <= 100);
+    }
+
+    #[test]
+    fn test_xp_high_coherence_bonus() {
+        let mut engine = EvolutionEngine::new();
+
+        // High coherence interaction
+        let mut state = ConversationBrainState::default();
+        state.coherence_score = 0.95;
+        engine.update(&state, 15);
+        let high_xp = engine.xp();
+
+        engine.hard_reset();
+
+        // Low coherence interaction
+        state.coherence_score = 0.5;
+        engine.update(&state, 15);
+        let low_xp = engine.xp();
+
+        assert!(high_xp > low_xp);
+    }
+
+    #[test]
+    fn test_learning_insights_with_high_drift() {
+        let mut engine = EvolutionEngine::new();
+
+        // Create patterns with high coherence
+        for _ in 0..10 {
+            let mut state = ConversationBrainState::default();
+            state.coherence_score = 0.95;
+            engine.update(&state, 15);
+        }
+
+        // Manually set high drift
+        engine.metrics.cognitive_drift = 0.3;
+
+        let insights = engine.apply_learnings();
+        assert!(insights
+            .recommendations
+            .iter()
+            .any(|r| r.contains("dérive")));
+    }
+
+    #[test]
+    fn test_multiple_mode_effectiveness() {
+        let mut engine = EvolutionEngine::new();
+
+        let modes = vec![
+            ConversationMode::Expert,
+            ConversationMode::Coach,
+            ConversationMode::Creative,
+        ];
+
+        for mode in modes {
+            let mut state = ConversationBrainState::default();
+            state.mode = mode;
+            state.coherence_score = 0.9;
+            engine.update(&state, 20);
+        }
+
+        assert!(engine.metrics().mode_effectiveness.len() >= 3);
+    }
+
+    #[test]
+    fn test_evolution_rate_clamping_bounds() {
+        let mut engine = EvolutionEngine::new();
+
+        engine.set_evolution_rate(0.0001);
+        assert_eq!(engine.evolution_rate, 0.0001);
+
+        engine.set_evolution_rate(0.1);
+        assert_eq!(engine.evolution_rate, 0.1);
+    }
+
+    #[test]
+    fn test_soft_reset_preserves_level() {
+        let mut engine = EvolutionEngine::at_level(5.0);
+        let state = ConversationBrainState::default();
+
+        for _ in 0..10 {
+            engine.update(&state, 20);
+        }
+
+        let level_before = engine.level();
+        engine.soft_reset();
+
+        // Level should be same or slightly higher due to evolution
+        assert!(engine.level() >= 5.0);
+        assert_eq!(engine.metrics().total_interactions, 0);
+    }
+
+    #[test]
+    fn test_all_conversation_modes_xp() {
+        let modes = vec![
+            ConversationMode::Expert,
+            ConversationMode::Coach,
+            ConversationMode::Creative,
+            ConversationMode::Logic,
+            ConversationMode::Meta,
+            ConversationMode::Cognitive,
+        ];
+
+        for mode in modes {
+            let mut engine = EvolutionEngine::new();
+            let mut state = ConversationBrainState::default();
+            state.mode = mode;
+            state.coherence_score = 0.9;
+            engine.update(&state, 15);
+            assert!(engine.xp() > 0.0);
+        }
+    }
+}

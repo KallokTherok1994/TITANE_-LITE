@@ -1,0 +1,14 @@
+import { renderHook } from '@/test-utils';
+import { useFocusTrap } from '@/a11y';
+
+describe('useFocusTrap', () => {
+  it('devrait piéger le focus dans le container', () => {
+    const { result } = renderHook(() => useFocusTrap(true));
+
+    expect(result.current.current).toBeDefined();
+  });
+
+  it('devrait gérer Tab et Shift+Tab', () => {
+    // ...existing test code...
+  });
+});

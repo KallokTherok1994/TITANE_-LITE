@@ -1,0 +1,166 @@
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *   TITANE∞ v26.2.0 — APP LAYOUT STYLES (TITANIUM DARK)
+ *   Design responsive avec Titanium Dark design system
+ *   WCAG 2.2 AA compliant, monochrome premium
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+.app-layout {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--titanium-bg-base);
+  overflow: hidden;
+}
+
+/* Skip to main content - Accessibilité (WCAG 2.2) */
+.skip-to-main {
+  position: absolute;
+  top: -100px;
+  left: var(--titanium-space-6);
+  z-index: var(--titanium-z-toast);
+  padding: var(--titanium-space-3) var(--titanium-space-6);
+  background: var(--titanium-accent-cool);
+  color: var(--titanium-bg-base);
+  text-decoration: none;
+  border-radius: var(--titanium-radius-base);
+  font-weight: var(--titanium-font-semibold);
+  transition: top var(--titanium-transition-fast);
+}
+
+.skip-to-main:focus {
+  top: var(--titanium-space-6);
+  outline: none;
+  box-shadow: var(--titanium-shadow-focus);
+}
+
+.app-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ═════════════════════════════════════════════════════════
+ * 📐 SIDEBAR NAVIGATION (Titanium Dark)
+ * ═════════════════════════════════════════════════════════ */
+
+.app-sidebar {
+  width: 260px;
+  background: var(--titanium-bg-elevated);
+  border-right: 1px solid var(--titanium-border-default);
+  transition: width var(--titanium-transition-slow);
+  overflow: hidden;
+  z-index: var(--titanium-z-fixed);
+  flex-shrink: 0;
+}
+
+.app-sidebar.collapsed {
+  width: 72px;
+}
+
+/* ═══════════════════════════════════════════════════════
+ * 📄 MAIN CONTENT AREA (Titanium Dark)
+ * ═══════════════════════════════════════════════════════ */
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--titanium-space-8);
+  background: var(--titanium-bg-base);
+}
+
+/* Custom scrollbar (Titanium Dark) */
+.app-main::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.app-main::-webkit-scrollbar-track {
+  background: var(--titanium-bg-base);
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  background: var(--titanium-bg-interactive);
+  border-radius: var(--titanium-radius-sm);
+  transition: var(--titanium-transition-base);
+}
+
+.app-main::-webkit-scrollbar-thumb:hover {
+  background: var(--titanium-bg-overlay);
+}
+
+/* ═══════════════════════════════════════════════════════
+ * 📱 RESPONSIVE (Titanium Dark)
+ * ═══════════════════════════════════════════════════════ */
+
+/* Mobile backdrop overlay (Titanium Dark glass morphism) */
+.app-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: calc(var(--titanium-z-fixed) - 1);
+  animation: fadeIn var(--titanium-transition-fast);
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tablet et mobile (max-width: 767px = below 768px tablet breakpoint) */
+@media (max-width: 767px) {
+  .app-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: var(--titanium-z-fixed);
+    box-shadow: var(--titanium-shadow-xl);
+    transform: translateX(-100%);
+    transition: transform var(--titanium-transition-slow);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-sidebar.mobile-closed {
+    transform: translateX(-100%);
+  }
+
+  /* Le contenu principal prend toute la largeur */
+  .app-main {
+    padding: var(--titanium-space-6);
+    width: 100%;
+  }
+
+  /* Skip link responsive */
+  .skip-to-main:focus {
+    left: var(--titanium-space-4);
+    font-size: var(--titanium-text-sm);
+  }
+}
+
+/* Mobile petit (max-width: 479px = below 480px small mobile breakpoint) */
+@media (max-width: 479px) {
+  .app-sidebar {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .app-main {
+    padding: var(--titanium-space-4);
+  }
+}

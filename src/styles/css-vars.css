@@ -1,0 +1,697 @@
+/**
+ * TITANE∞ v25.4.2 — CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+ *
+ * Design System centralisé pour TITANE_LITE
+ * Palette: Titane Métallique + Violet Énergie + Cyan Tech + Émeraude Arc Reactor
+ * Mobile-first, responsive, accessible
+ *
+ * v25.4.2 Premium Glass Tech System
+ */
+
+:root {
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* COULEURS PRIMAIRES — TITANE∞ SIGNATURE                          */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Titane Métallique (base gris/charbon/argent) */
+  --color-titane-50: #f8f9fa;
+  --color-titane-100: #e9ecef;
+  --color-titane-200: #dee2e6;
+  --color-titane-300: #ced4da;
+  --color-titane-400: #adb5bd;
+  --color-titane-500: #727b81; /* BASE */
+  --color-titane-600: #5a6267;
+  --color-titane-700: #495057;
+  --color-titane-800: #343a40;
+  --color-titane-900: #212529;
+
+  /* Violet Énergie (accents, CTA, interactions) */
+  --color-violet-50: #faf5ff;
+  --color-violet-100: #f3e8ff;
+  --color-violet-200: #e9d5ff;
+  --color-violet-300: #d8b4fe;
+  --color-violet-400: #c084fc;
+  --color-violet-500: #a855f7;
+  --color-violet-600: #7c3aed; /* BASE */
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+
+  /* Sage Subtil (respirations visuelles, accents doux) */
+  --color-sage-50: #f7fee7;
+  --color-sage-100: #ecfccb;
+  --color-sage-200: #d9f99d;
+  --color-sage-300: #bef264;
+  --color-sage-400: #a3e635;
+  --color-sage-500: #84cc16; /* BASE */
+  --color-sage-600: #65a30d;
+  --color-sage-700: #4d7c0f;
+  --color-sage-800: #3f6212;
+  --color-sage-900: #365314;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* COULEURS SÉMANTIQUES                                             */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Success (vert) */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #10b981;
+  --color-success-700: #047857;
+  --color-success-900: #064e3b;
+
+  /* Error (rouge) */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-700: #b91c1c;
+  --color-error-900: #7f1d1d;
+
+  /* Warning (orange) */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-700: #b45309;
+  --color-warning-900: #78350f;
+
+  /* Info (bleu) */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-700: #1d4ed8;
+  --color-info-900: #1e3a8a;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* COULEURS NEUTRAL (BACKGROUNDS & TEXT)                            */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Backgrounds (dark mode by default) */
+  --color-bg-primary: #0f172a; /* slate-900 */
+  --color-bg-secondary: #1e293b; /* slate-800 */
+  --color-bg-tertiary: #334155; /* slate-700 */
+  --color-bg-elevated: #475569; /* slate-600 */
+  --color-bg-overlay: #64748b; /* slate-500 */
+
+  /* Text colors */
+  --color-text-primary: #f1f5f9; /* slate-100 */
+  --color-text-secondary: #cbd5e1; /* slate-300 */
+  --color-text-muted: #94a3b8; /* slate-400 */
+  --color-text-disabled: #64748b; /* slate-500 */
+  --color-text-inverse: #0f172a; /* slate-900 */
+
+  /* Borders */
+  --color-border-default: #334155; /* slate-700 */
+  --color-border-subtle: #1e293b; /* slate-800 */
+  --color-border-strong: #475569; /* slate-600 */
+  --color-border-accent: var(--color-violet-600);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* SPACING SYSTEM (4px base unit)                                   */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --space-0: 0;
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 1.75rem; /* 28px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* TYPOGRAPHY                                                        */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Font families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  /* Font sizes */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+  --text-5xl: 3rem; /* 48px */
+
+  /* Line heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* Font weights */
+  --font-thin: 100;
+  --font-extralight: 200;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* RADIUS (BORDER RADIUS)                                           */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.5rem; /* 24px */
+  --radius-full: 9999px; /* Circle */
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* SHADOWS                                                           */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Glow effects (pour états actifs, focus) */
+  --shadow-glow-violet: 0 0 20px rgba(124, 58, 237, 0.4);
+  --shadow-glow-sage: 0 0 20px rgba(132, 204, 22, 0.4);
+  --shadow-glow-titane: 0 0 20px rgba(114, 123, 129, 0.4);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* Z-INDEX LAYERS                                                    */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+  --z-toast: 1700;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* TRANSITIONS & ANIMATIONS                                          */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Durations */
+  --duration-75: 75ms;
+  --duration-100: 100ms;
+  --duration-150: 150ms;
+  --duration-200: 200ms;
+  --duration-300: 300ms;
+  --duration-500: 500ms;
+  --duration-700: 700ms;
+  --duration-1000: 1000ms;
+
+  /* Easing functions */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Transitions combinées (raccourcis) */
+  --transition-fast: var(--duration-150) var(--ease-out);
+  --transition-base: var(--duration-300) var(--ease-in-out);
+  --transition-slow: var(--duration-500) var(--ease-in-out);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* BREAKPOINTS (pour référence, gérés par Tailwind)                 */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --breakpoint-sm: 640px; /* Phones landscape */
+  --breakpoint-md: 768px; /* Tablets */
+  --breakpoint-lg: 1024px; /* Laptops */
+  --breakpoint-xl: 1280px; /* Desktops */
+  --breakpoint-2xl: 1536px; /* Large screens */
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* LAYOUT DIMENSIONS                                                 */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 64px;
+  --header-height: 64px;
+  --footer-height: 48px;
+  --max-content-width: 1280px;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* SEMANTIC ALIASES v25.4.1 — For Component Compatibility          */
+  /* Maps Button.css, Card.css, etc. variables to design tokens      */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Primary color semantic mapping */
+  --primary-main: var(--color-violet-600);
+  --primary-light: var(--color-violet-500);
+  --primary-dark: var(--color-violet-700);
+  --primary-rgb: 124, 58, 237;
+
+  /* Neutral scale (for component variants) */
+  --neutral-0: #ffffff;
+  --neutral-5: #fafafa;
+  --neutral-10: #f5f5f5;
+  --neutral-20: #e5e5e5;
+  --neutral-30: #d4d4d4;
+  --neutral-40: #a3a3a3;
+  --neutral-50: #737373;
+  --neutral-60: #525252;
+  --neutral-70: #404040;
+  --neutral-80: #262626;
+  --neutral-90: #171717;
+  --neutral-100: #0a0a0a;
+
+  /* Semantic states */
+  --danger: var(--color-error-500);
+  --danger-hover: var(--color-error-700);
+  --danger-active: var(--color-error-900);
+  --warning: var(--color-warning-500);
+  --success: var(--color-success-500);
+  --info: var(--color-info-500);
+
+  /* Glass morphism effects */
+  --glass-alpha: rgba(255, 255, 255, 0.1);
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 20px;
+
+  /* Font size aliases (used by Button.css) */
+  --font-size-small: var(--text-sm);
+  --font-size-body: var(--text-base);
+  --font-size-h5: var(--text-lg);
+  --font-size-h4: var(--text-xl);
+  --font-size-h3: var(--text-2xl);
+  --font-size-h2: var(--text-3xl);
+  --font-size-h1: var(--text-4xl);
+
+  /* Font weight aliases */
+  --font-weight-normal: var(--font-normal);
+  --font-weight-medium: var(--font-medium);
+  --font-weight-semibold: var(--font-semibold);
+  --font-weight-bold: var(--font-bold);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* ACCENT & INTERACTION v25.4.2 — Global Accent Variables          */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Main accent (émeraude TITANE∞) */
+  --accent: #10b981;
+  --accent-light: #34d399;
+  --accent-dark: #059669;
+  --accent-rgb: 16, 185, 129;
+  --accent-glow: rgba(16, 185, 129, 0.5);
+
+  /* Secondary accent (violet) */
+  --accent-secondary: var(--color-violet-600);
+  --accent-secondary-light: var(--color-violet-500);
+  --accent-secondary-dark: var(--color-violet-700);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* BACKGROUND LAYERS v25.4.2 — Panel/Card/Glass Backgrounds        */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Base backgrounds */
+  --bg-base: var(--color-bg-primary);
+  --bg-surface: var(--color-bg-secondary);
+  --bg-elevated: var(--color-bg-elevated);
+  --bg-overlay: var(--color-bg-overlay);
+
+  /* Component backgrounds */
+  --bg-card: rgba(30, 41, 59, 0.8);
+  --bg-card-hover: rgba(51, 65, 85, 0.9);
+  --bg-panel: rgba(15, 23, 42, 0.95);
+  --bg-panel-light: rgba(30, 41, 59, 0.7);
+  --bg-glass: rgba(255, 255, 255, 0.05);
+  --bg-glass-strong: rgba(255, 255, 255, 0.1);
+  --bg-input: rgba(15, 23, 42, 0.6);
+  --bg-hover: rgba(71, 85, 105, 0.4);
+  --bg-active: rgba(124, 58, 237, 0.2);
+
+  /* Chat-specific backgrounds */
+  --chat-input-bg: rgba(15, 23, 42, 0.8);
+  --chat-input-border: var(--color-border-default);
+  --chat-bubble-user: rgba(124, 58, 237, 0.15);
+  --chat-bubble-ai: rgba(16, 185, 129, 0.1);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* ADMIN PANEL v25.4.2 — Admin-specific Variables                  */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  --admin-bg-start: #0f172a;
+  --admin-bg-end: #1e293b;
+  --admin-header-bg-start: rgba(30, 41, 59, 0.9);
+  --admin-header-bg-end: rgba(15, 23, 42, 0.95);
+  --admin-spacing-xl: var(--space-8);
+  --admin-font-mono: var(--font-mono);
+
+  /* Admin Design Panel (ADP) */
+  --adp-accent: var(--accent);
+  --adp-bg: var(--bg-panel);
+  --adp-border: var(--color-border-default);
+  --adp-error: var(--color-error-500);
+  --adp-radius: var(--radius-lg);
+
+  /* Cloud/API Panel */
+  --cloud-accent: var(--color-info-500);
+  --cloud-bg: var(--bg-card);
+  --cloud-border: var(--color-border-subtle);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* AURA EFFECTS v25.4.2 — Quantum/Visual Effect Variables          */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Aura color palette */
+  --aura-amber: #f59e0b;
+  --aura-blue: #3b82f6;
+  --aura-cyan: #06b6d4;
+  --aura-emerald: #10b981;
+  --aura-green: #22c55e;
+  --aura-indigo: #6366f1;
+  --aura-orange: #f97316;
+  --aura-pink: #ec4899;
+  --aura-purple: #a855f7;
+  --aura-red: #ef4444;
+  --aura-rose: #f43f5e;
+  --aura-sky: #0ea5e9;
+  --aura-teal: #14b8a6;
+  --aura-violet: #8b5cf6;
+  --aura-yellow: #eab308;
+
+  /* Aura gradients */
+  --aura-gradient-1: linear-gradient(135deg, var(--aura-violet), var(--aura-cyan));
+  --aura-gradient-2: linear-gradient(135deg, var(--aura-emerald), var(--aura-teal));
+  --aura-gradient-rainbow: linear-gradient(
+    135deg,
+    var(--aura-red),
+    var(--aura-orange),
+    var(--aura-yellow),
+    var(--aura-green),
+    var(--aura-cyan),
+    var(--aura-blue),
+    var(--aura-violet)
+  );
+
+  /* Aura animation durations */
+  --aura-pulse-duration: 2s;
+  --aura-float-duration: 6s;
+  --aura-rotate-duration: 20s;
+  --aura-glow-duration: 3s;
+
+  /* Aura intensities */
+  --aura-intensity-low: 0.3;
+  --aura-intensity-medium: 0.5;
+  --aura-intensity-high: 0.8;
+  --aura-intensity-max: 1;
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* TITANE∞ EMERALD THEME v25.4.2 — Arc Reactor Identity            */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Emerald core colors (Arc Reactor) */
+  --emerald-core: #10b981;
+  --emerald-glow: #34d399;
+  --emerald-bright: #6ee7b7;
+  --emerald-pale: #a7f3d0;
+  --emerald-deep: #059669;
+  --emerald-dark: #047857;
+
+  /* Emerald gradients */
+  --emerald-gradient-core: radial-gradient(
+    circle,
+    var(--emerald-bright) 0%,
+    var(--emerald-glow) 40%,
+    var(--emerald-core) 70%,
+    var(--emerald-deep) 100%
+  );
+  --emerald-gradient-glow: radial-gradient(
+    circle,
+    rgba(110, 231, 183, 0.6) 0%,
+    rgba(52, 211, 153, 0.3) 50%,
+    transparent 70%
+  );
+
+  /* Emerald shadows */
+  --shadow-emerald-sm: 0 0 10px rgba(16, 185, 129, 0.3);
+  --shadow-emerald-md: 0 0 20px rgba(16, 185, 129, 0.4);
+  --shadow-emerald-lg: 0 0 30px rgba(16, 185, 129, 0.5);
+  --shadow-emerald-xl: 0 0 40px rgba(16, 185, 129, 0.6);
+  --shadow-emerald-glow: 0 0 60px rgba(52, 211, 153, 0.7);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* METALLIC EFFECTS v25.4.2 — Premium Tech UI Effects              */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Metallic silver/titanium gradients */
+  --metallic-silver: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(230, 230, 230, 0.9) 20%,
+    rgba(192, 192, 192, 0.85) 40%,
+    rgba(255, 255, 255, 0.9) 60%,
+    rgba(211, 211, 211, 0.85) 80%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  --metallic-titanium: linear-gradient(
+    135deg,
+    var(--color-titane-300) 0%,
+    var(--color-titane-400) 25%,
+    var(--color-titane-300) 50%,
+    var(--color-titane-500) 75%,
+    var(--color-titane-300) 100%
+  );
+  --metallic-violet: linear-gradient(
+    135deg,
+    var(--color-violet-300) 0%,
+    var(--color-violet-400) 30%,
+    var(--color-violet-300) 50%,
+    var(--color-violet-500) 70%,
+    var(--color-violet-300) 100%
+  );
+
+  /* Tech glow effects */
+  --glow-violet-soft: 0 0 12px rgba(168, 85, 247, 0.4);
+  --glow-violet-medium: 0 0 20px rgba(168, 85, 247, 0.5);
+  --glow-violet-intense: 0 0 30px rgba(168, 85, 247, 0.7);
+  --glow-titane-soft: 0 0 12px rgba(114, 123, 129, 0.4);
+  --glow-titane-medium: 0 0 20px rgba(114, 123, 129, 0.5);
+  --glow-titane-intense: 0 0 30px rgba(114, 123, 129, 0.7);
+  --glow-silver: 0 0 15px rgba(255, 255, 255, 0.3);
+
+  /* Tech shadows (depth & realism) */
+  --shadow-tech-inset:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --shadow-tech-button:
+    0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-tech-card:
+    0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-tech-panel: 0 8px 32px rgba(0, 0, 0, 0.5), 0 16px 48px rgba(0, 0, 0, 0.3);
+  --shadow-tech-floating: 0 12px 40px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Border effects */
+  --border-tech-subtle: 1px solid rgba(255, 255, 255, 0.08);
+  --border-tech-light: 1px solid rgba(255, 255, 255, 0.12);
+  --border-tech-medium: 1px solid rgba(255, 255, 255, 0.18);
+  --border-tech-glow-violet: 1px solid rgba(168, 85, 247, 0.5);
+  --border-tech-glow-emerald: 1px solid rgba(16, 185, 129, 0.5);
+
+  /* Glass morphism advanced */
+  --glass-tech-bg: rgba(15, 23, 42, 0.7);
+  --glass-tech-bg-light: rgba(30, 41, 59, 0.6);
+  --glass-tech-border: rgba(255, 255, 255, 0.1);
+  --glass-tech-blur: 16px;
+  --glass-tech-backdrop: blur(16px) saturate(180%);
+
+  /* Text effects */
+  --text-shadow-tech: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --text-shadow-glow-violet: 0 0 8px rgba(168, 85, 247, 0.5);
+  --text-shadow-glow-titane: 0 0 8px rgba(192, 192, 192, 0.5);
+  --text-shadow-emboss: 0 1px 0 rgba(255, 255, 255, 0.1), 0 -1px 0 rgba(0, 0, 0, 0.3);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* CYAN TECH v25.4.2 — Official Cyan Variables                    */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Cyan officiel TITANE (cohérent avec aura-cyan) */
+  --color-cyan-official: #06b6d4;
+  --color-cyan-light: #67e8f9;
+  --color-cyan-dark: #0891b2;
+  --color-cyan-glow: rgba(6, 182, 212, 0.5);
+
+  /* Cyan shadows */
+  --shadow-cyan-sm: 0 0 10px rgba(6, 182, 212, 0.3);
+  --shadow-cyan-md: 0 0 20px rgba(6, 182, 212, 0.4);
+  --shadow-cyan-lg: 0 0 30px rgba(6, 182, 212, 0.5);
+  --shadow-cyan-glow: 0 0 40px rgba(103, 232, 249, 0.6);
+
+  /* ═══════════════════════════════════════════════════════════════ */
+  /* VIOLET ENERGY v25.4.2 — Consolidated Violet Variables          */
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  /* Violet officiel (139, 92, 246) */
+  --color-violet-official: #8b5cf6;
+  --color-violet-light: #c4b5fd;
+  --color-violet-bright: #a78bfa;
+  --color-violet-glow: rgba(139, 92, 246, 0.5);
+
+  /* Violet shadows */
+  --shadow-violet-sm: 0 0 10px rgba(139, 92, 246, 0.3);
+  --shadow-violet-md: 0 0 20px rgba(139, 92, 246, 0.4);
+  --shadow-violet-lg: 0 0 30px rgba(139, 92, 246, 0.5);
+  --shadow-violet-glow: 0 0 40px rgba(168, 85, 247, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* GLOBAL RESETS & BASE STYLES                                      */
+/* ═══════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling pour les ancres */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection colors */
+::selection {
+  background-color: var(--color-violet-600);
+  color: var(--color-text-primary);
+}
+
+::-moz-selection {
+  background-color: var(--color-violet-600);
+  color: var(--color-text-primary);
+}
+
+/* Focus visible (accessibilité) */
+:focus-visible {
+  outline: 2px solid var(--color-violet-500);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling (WebKit) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-bg-elevated);
+}
+
+/* Code blocks */
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Images responsive par défaut */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Liens */
+a {
+  color: var(--color-violet-400);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-violet-300);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-violet-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* UTILITY CLASSES (légers, Tailwind prendra le relais)            */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}

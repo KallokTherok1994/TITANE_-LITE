@@ -1,0 +1,795 @@
+/**
+ * TITANE∞ Cognitive Layout Control Styles - Enhanced v2.0
+ */
+
+.cognitive-layout-control {
+  position: fixed;
+  /* Position dynamique via style inline (drag & drop) */
+  z-index: 1000;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  max-width: 480px;
+  min-width: 360px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInRight 0.3s ease-out;
+  user-select: none; /* Prevent text selection during drag */
+  backdrop-filter: blur(12px);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.cognitive-layout-control.collapsed {
+  max-width: 280px;
+  min-width: 240px;
+}
+
+/* Header */
+.clc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  gap: 16px;
+}
+
+.clc-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  flex: 1;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Bouton Expand/Collapse - FIXED & ENHANCED */
+.clc-collapse-btn {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-primary, #fff);
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  position: relative;
+  z-index: 10;
+}
+
+.clc-collapse-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.clc-collapse-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.clc-collapse-arrow {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
+  font-size: 20px;
+}
+
+.clc-collapse-arrow.collapsed {
+  transform: rotate(0deg);
+}
+
+.clc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.clc-toggle input[type='checkbox'] {
+  margin: 0;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   HISTORY CONTROLS (Undo/Redo) v25.7.0
+   ═════════════════════════════════════════════════════════════════ */
+
+.clc-history-controls {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.clc-history-btn {
+  background: var(--surface-hover, #2a2a2a);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 6px;
+  color: var(--text-primary, #e0e0e0);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.clc-history-btn:hover:not(:disabled) {
+  background: var(--surface-elevated, #333);
+  border-color: var(--primary, #00d4ff);
+  transform: scale(1.05);
+}
+
+.clc-history-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.clc-history-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Contenu collapsible */
+.clc-content {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.clc-content.collapsed {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transform: translateY(-10px);
+}
+
+/* Mode actuel */
+.clc-current-mode {
+  margin-bottom: 20px;
+}
+
+.clc-mode-badge {
+  display: inline-block;
+  background: var(--accent-primary, #0ea5e9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.clc-mode-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  line-height: 1.4;
+}
+
+/* Suggestion */
+.clc-suggestion {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(168, 85, 247, 0.1));
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.clc-suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.clc-suggestion-icon {
+  font-size: 20px;
+}
+
+.clc-suggestion-title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.clc-suggestion-confidence {
+  font-size: 12px;
+  background: rgba(14, 165, 233, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--accent-primary, #0ea5e9);
+}
+
+.clc-suggestion-body {
+  margin-bottom: 12px;
+}
+
+.clc-suggestion-mode {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+}
+
+.clc-suggestion-reason {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  line-height: 1.4;
+}
+
+.clc-suggestion-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+.clc-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clc-btn-primary {
+  background: var(--accent-primary, #0ea5e9);
+  color: white;
+}
+
+.clc-btn-primary:hover {
+  background: var(--accent-primary-hover, #0284c7);
+  transform: translateY(-1px);
+}
+
+.clc-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #fff);
+}
+
+.clc-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.clc-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.clc-export-actions {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.clc-import-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   PRESET LAYOUTS v25.7.1
+   ═════════════════════════════════════════════════════════════════ */
+
+.clc-presets {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle, #333);
+}
+
+.clc-presets h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.clc-presets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clc-preset-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.clc-preset-load {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-hover, #2a2a2a);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 6px;
+  color: var(--text-primary, #e0e0e0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.clc-preset-load:hover {
+  background: var(--surface-elevated, #333);
+  border-color: var(--primary, #00d4ff);
+}
+
+.clc-preset-name {
+  font-weight: 500;
+}
+
+.clc-preset-mode {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.clc-preset-delete {
+  padding: 6px 10px;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 6px;
+  color: #ff6b6b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.clc-preset-delete:hover {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: rgba(255, 0, 0, 0.5);
+}
+
+.clc-preset-dialog {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-elevated, #2a2a2a);
+  border: 1px solid var(--primary, #00d4ff);
+  border-radius: 8px;
+}
+
+.clc-preset-dialog h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+}
+
+.clc-preset-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface-base, #1e1e1e);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 6px;
+  color: var(--text-primary, #fff);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.clc-preset-input:focus {
+  outline: none;
+  border-color: var(--primary, #00d4ff);
+}
+
+.clc-preset-dialog-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Mode Selector */
+.clc-mode-selector {
+  margin-bottom: 20px;
+}
+
+.clc-mode-selector h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.clc-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.clc-mode-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.clc-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.clc-mode-btn.active {
+  background: var(--accent-primary, #0ea5e9);
+  border-color: var(--accent-primary, #0ea5e9);
+  color: white;
+  font-weight: 600;
+}
+
+/* Signaux cognitifs */
+.clc-signals {
+  margin-bottom: 20px;
+}
+
+.clc-signals h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.clc-signal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.clc-signal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clc-signal-label {
+  font-size: 12px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  min-width: 80px;
+}
+
+.clc-signal-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.clc-signal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #0ea5e9);
+  transition: width 0.3s ease;
+}
+
+.clc-signal-fill.clc-signal-negative {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.clc-signal-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.clc-warning {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+/* Actions */
+.clc-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.clc-actions button {
+  flex: 1;
+}
+
+/* Badge compact pour toolbar */
+.cognitive-layout-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-primary, #0ea5e9);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cognitive-layout-badge:hover {
+  background: rgba(14, 165, 233, 0.25);
+  transform: translateY(-1px);
+}
+
+.clc-badge-dot {
+  color: #10b981;
+  font-size: 16px;
+  line-height: 1;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Adaptations selon le mode actif (via body data-attribute) */
+body[data-ui-mode='focus_deep'] {
+  --ui-animations-duration: 0ms;
+}
+
+body[data-ui-mode='focus_deep'] .cognitive-layout-control {
+  /* Plus compact en mode focus */
+  max-width: 320px;
+}
+
+body.sidebar-compact {
+  --sidebar-width: 60px;
+}
+
+body.sidebar-autohide:not(:hover) {
+  --sidebar-opacity: 0.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cognitive-layout-control {
+    max-width: calc(100vw - 40px);
+    right: 10px;
+    left: 10px;
+    top: 60px;
+  }
+
+  .cognitive-layout-control.collapsed {
+    max-width: calc(100vw - 40px);
+  }
+
+  .clc-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clc-header {
+    flex-wrap: wrap;
+  }
+
+  .clc-header h3 {
+    font-size: 16px;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   ANIMATIONS POLISH v25.7.3
+   ═════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Apply animations */
+.cognitive-layout-control {
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clc-content {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.clc-mode-btn:hover:not(:disabled) {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(
+    90deg,
+    var(--surface-hover, #2a2a2a) 25%,
+    var(--surface-elevated, #333) 50%,
+    var(--surface-hover, #2a2a2a) 75%
+  );
+  background-size: 200% 100%;
+}
+
+.clc-suggestion {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.clc-preset-dialog {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Smooth transitions */
+.clc-mode-btn,
+.clc-btn,
+.clc-history-btn,
+.clc-preset-load,
+.cognitive-layout-badge {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   ACCESSIBILITY - Screen Reader Only Utility
+   ═════════════════════════════════════════════════════════════════ */
+
+.clc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible for keyboard navigation */
+.cognitive-layout-control *:focus-visible {
+  outline: 2px solid var(--primary, #00d4ff);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .cognitive-layout-control {
+    border: 2px solid currentColor;
+  }
+
+  .clc-mode-btn.active {
+    border: 3px solid var(--primary, #00d4ff);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .cognitive-layout-control,
+  .clc-mode-btn,
+  .cognitive-layout-badge,
+  .clc-badge-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   COGNITIVE LAYOUT BADGE (Mini-mode)
+   v25.6.7: Compact toolbar button
+   ═════════════════════════════════════════════════════════════════ */
+
+.cognitive-layout-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-elevated, #1e1e1e);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #e0e0e0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.cognitive-layout-badge:hover {
+  background: var(--surface-hover, #2a2a2a);
+  border-color: var(--primary, #00d4ff);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.2);
+}
+
+.cognitive-layout-badge:active {
+  transform: translateY(0);
+}
+
+.clc-badge-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--warning, #ffaa00);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}

@@ -1,0 +1,150 @@
+[package]
+name         = "titane-lite"
+version      = "27.0.0"
+description  = "TITANE∞ LITE v27.0.0 - Cognitive Operating System: Production Final Release, Full Validation, Stable & Perfect"
+authors      = ["Kevin Thibault / Humain Total / TITANE Team"]
+license      = "SEE LICENSE.md"
+repository   = "https://github.com/KallokTherok1994/TITANE_-LITE"
+edition      = "2021"
+rust-version = "1.70"
+
+[profile.dev]
+opt-level = 1         # Basic optimizations in dev mode (faster builds)
+debug = true          # Keep debug symbols
+incremental = true    # Enable incremental compilation
+
+[profile.release]
+opt-level = 3         # Maximum optimizations
+lto = "thin"          # Thin LTO for faster linking (20-30% faster than "fat")
+codegen-units = 16    # Parallel compilation (4x faster than 1, minimal perf impact)
+strip = false         # TAURI FIX: Keep symbols for bundler metadata (__TAURI_BUNDLE_TYPE)
+panic = "abort"       # Abort on panic (no unwinding overhead)
+incremental = true    # Enable incremental compilation for faster rebuilds
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri                          = { version = "2.0", features = ["tray-icon", "protocol-asset"] }
+tauri-plugin-dialog            = "2.6"
+tauri-plugin-clipboard-manager = "2.0"
+serde                          = { version = "1.0", features = ["derive"] }
+serde_json                     = "1.0"
+log                            = "0.4"
+env_logger                     = "0.11"
+rand                           = "0.8"
+chrono                         = { version = "0.4", features = ["serde"] }
+uuid                           = { version = "1.6", features = ["v4", "serde"] }
+tokio                          = { version = "1.35", features = ["full"] }
+thiserror                      = "1.0"
+sysinfo                        = "0.37"
+
+# Core dependencies (actively used)
+base64           = "0.22"
+aes-gcm          = "0.10"
+sha2             = "0.10"
+once_cell        = "1.19"
+reqwest          = { version = "0.11", features = ["json", "stream"] }
+regex            = "1.10"
+dirs             = "5.0"
+dotenv           = "0.15"
+urlencoding      = "2.1"
+argon2           = "0.5"
+url              = "2.4"
+instant-distance = "0.6.1"
+futures-util     = "0.3"
+zeroize          = "1.7"
+
+# Super-Prompts H, J, K, L - Security & Crypto
+ed25519-dalek = "2.1"
+lazy_static   = "1.4"
+flate2        = "1.0"
+
+# Super-Prompts P-U - Phases 5-10 (Node-Cluster, Knowledge, HyperVision, Création, Introspection, Évolution)
+walkdir = "2.4" # Phase 9: Introspection filesystem traversal
+
+# Phase 8: Rust Allocations Optimization (v24.20)
+# v20.1: Added serde feature for unified_memory.rs MemoryTags serialization
+smallvec = { version = "1.13", features = ["serde"] } # Stack-allocated Vec for small arrays (<8 elements)
+
+# Phase 2: P2-1 IPC Optimization - Lock-free concurrent HashMap
+dashmap = "6.0" # Concurrent HashMap (replaces RwLock<HashMap>)
+
+# SP-PERF-004: Memory Pool Optimization
+parking_lot = "0.12" # Fast synchronization primitives (Mutex, RwLock)
+
+# SUPER PROMPT #3: Performance & Latence v20.1
+lru = "0.12" # LRU cache for AI responses (AIRouterCache)
+
+# SUPER PROMPT #8: Multi-IA Orchestrator vΩ.5
+async-trait = "0.1" # Async trait support for providers
+
+# Audio Engine v∞: Real-time audio capture and playback (optional)
+# Requires: libasound2-dev on Linux (sudo apt install libasound2-dev)
+cpal  = { version = "0.15", optional = true }
+hound = "3.5"                                 # WAV file reading/writing
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+ndarray = "0.17.1"
+rustfft = "6.2"                               # FFT for spectral analysis (voice fingerprinting)
+
+# SUPER PROMPTS #6-7-8: Memory OS + Vector Database
+hnsw_rs = "0.3"     # HNSW vector index (cross-platform)
+# faiss = { version = "0.12", optional = true }  # FAISS (Linux AVX only)
+
+# SUPER PROMPT #15: Multimodal Expansion vΩ
+image = "0.25"           # Image loading and processing
+ort = { version = "2.0.0-rc.10", optional = true }  # ONNX Runtime (optional, requires system libs)
+tokio-stream = "0.1.17"
+async-stream = "0.3.6"
+md5 = "0.8.0"
+tracing = "0.1.43"
+bincode = "1.3.3"
+
+[features]
+default = ["custom-protocol", "mock"]
+custom-protocol = ["tauri/custom-protocol"]
+mock = [] # Mock backend mode for frontend-only development
+full = [] # Full backend mode with all real implementations
+ollama = [] # Ollama integration for local LLM
+audio-capture = [
+    "cpal",
+] # Enable real-time audio capture (requires libasound2-dev)
+onnx = ["ort"] # Enable ONNX Runtime for vision models (optional)
+
+[dev-dependencies]
+tempfile = "3.8"
+criterion = { version = "0.5", features = ["html_reports"] }  # P2-1: IPC Benchmarks
+mockall = "0.14"
+
+# Phase 9: Tests E2E & Stress
+[[test]]
+name = "agent_ia_workflow_test"
+path = "tests/integration/agent_ia_workflow_test.rs"
+
+[[test]]
+name = "fallback_chain_test"
+path = "tests/integration/fallback_chain_test.rs"
+
+[[test]]
+name = "singularity_integration_test"
+path = "tests/integration/singularity_integration_test.rs"
+
+[[test]]
+name = "metrics_stress_test"
+path = "tests/stress/metrics_stress_test.rs"
+
+[[test]]
+name = "concurrent_access_test"
+path = "tests/stress/concurrent_access_test.rs"
+
+[[test]]
+name = "permission_enforcement_test"
+path = "tests/security/permission_enforcement_test.rs"
+
+# ═══════════════════════════════════════════════════════════════
+#   BENCHMARKS - P2-1 IPC Optimization
+# ═══════════════════════════════════════════════════════════════
+
+[[bench]]
+name = "ipc_benchmarks"
+harness = false

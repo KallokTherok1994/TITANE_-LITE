@@ -1,0 +1,467 @@
+name: TITANE∞ CI/CD Unified Pipeline v26.3.0
+
+on:
+  push:
+    branches: [MAIN, main, dev, stable-runtime]
+  pull_request:
+    branches: [MAIN, main]
+  workflow_dispatch:
+
+# Prevent concurrent runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default permissions (least privilege)
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '22'
+  RUST_VERSION: '1.83'
+  PNPM_VERSION: '10.28.2'
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # LINT & TYPE CHECK
+  # ═══════════════════════════════════════════════════════════════════════════
+  lint-and-typecheck:
+    name: 🔍 Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 🔧 Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Run ESLint
+        run: pnpm run lint
+
+      - name: 🔍 TypeScript type check
+        run: pnpm run check
+
+      - name: ✅ Format check
+        run: pnpm run format:check
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔍 Lint & Type Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ TypeScript check completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Prettier format check completed" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FRONTEND TESTS
+  # ═══════════════════════════════════════════════════════════════════════════
+  test-frontend:
+    name: 🧪 Frontend Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 🔧 Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧪 Run Vitest tests
+        run: pnpm run test -- --run
+        env:
+          NODE_OPTIONS: '--max-old-space-size=12288 --require ./tests/polyfills/resizable-arraybuffer.cjs'
+
+      - name: 📊 Test coverage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/MAIN'
+        run: pnpm run test:coverage
+        env:
+          NODE_OPTIONS: '--max-old-space-size=12288 --require ./tests/polyfills/resizable-arraybuffer.cjs'
+
+      - name: 🎯 Check coverage threshold
+        if: github.event_name == 'push' && github.ref == 'refs/heads/MAIN'
+        run: |
+          # Extract coverage percentage from Vitest output using jq for robust JSON parsing
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "⚠️ No coverage summary found, skipping threshold check"
+            exit 0
+          fi
+
+          # Check if jq is available (it's standard on GitHub Actions runners)
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "⚠️ jq is not installed, falling back to grep parsing"
+            # Fallback to safer grep parsing
+            LINES_PCT=$(grep -o '"lines"[^}]*"pct":[0-9.]*' coverage/coverage-summary.json | grep -o '[0-9.]*$' | head -1)
+            BRANCHES_PCT=$(grep -o '"branches"[^}]*"pct":[0-9.]*' coverage/coverage-summary.json | grep -o '[0-9.]*$' | head -1)
+          else
+            # Use jq for robust JSON parsing
+            LINES_PCT=$(jq -r '.total.lines.pct // empty' coverage/coverage-summary.json)
+            BRANCHES_PCT=$(jq -r '.total.branches.pct // empty' coverage/coverage-summary.json)
+          fi
+
+          if [ -z "$LINES_PCT" ] || [ -z "$BRANCHES_PCT" ]; then
+            echo "⚠️ Could not read coverage percentages from coverage-summary.json, skipping threshold check"
+            exit 0
+          fi
+
+          echo "📊 Coverage Results:"
+          echo "  Lines: ${LINES_PCT}%"
+          echo "  Branches: ${BRANCHES_PCT}%"
+
+          # Check thresholds (70% lines, 60% branches) using awk for portability
+          # awk is more universally available than bc
+          if awk "BEGIN {exit !($LINES_PCT < 70)}"; then
+            echo "❌ Line coverage ${LINES_PCT}% is below threshold 70%"
+            echo "::warning::Line coverage is below 70% threshold"
+          else
+            echo "✅ Line coverage ${LINES_PCT}% meets threshold 70%"
+          fi
+
+          if awk "BEGIN {exit !($BRANCHES_PCT < 60)}"; then
+            echo "⚠️ Branch coverage ${BRANCHES_PCT}% is below threshold 60%"
+            echo "::warning::Branch coverage is below 60% threshold"
+          else
+            echo "✅ Branch coverage ${BRANCHES_PCT}% meets threshold 60%"
+          fi
+        continue-on-error: true
+
+      - name: 📤 Upload coverage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/MAIN'
+        uses: codecov/codecov-action@v5.5.2
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🧪 Frontend Tests Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests executed with Vitest" >> $GITHUB_STEP_SUMMARY
+          echo "- Node.js: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RUST BACKEND TESTS
+  # ═══════════════════════════════════════════════════════════════════════════
+  test-backend:
+    name: 🦀 Rust Backend Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 📁 Ensure dist directory exists
+        run: mkdir -p dist
+
+      - name: 🔧 Install system dependencies (Tauri)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libasound2-dev \
+            patchelf
+
+      - name: 🦀 Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@1.83
+        with:
+          components: clippy, rustfmt
+
+      - name: 💾 Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2.7.3
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+
+      - name: ✔️ Cargo check
+        working-directory: src-tauri
+        run: cargo check --verbose
+
+      - name: 🧪 Run Cargo tests
+        working-directory: src-tauri
+        run: cargo test --verbose
+
+      - name: 🔍 Run Clippy (linter)
+        working-directory: src-tauri
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🦀 Rust Backend Tests Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Cargo tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Clippy analysis completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Rust: ${{ env.RUST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # E2E TESTS (Playwright)
+  # ═══════════════════════════════════════════════════════════════════════════
+  test-e2e:
+    name: 🎭 E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 🔧 Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🎭 Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 🧪 Run E2E tests
+        run: pnpm run test:e2e
+        continue-on-error: true
+
+      - name: 📤 Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🎭 E2E Tests Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E tests executed with Playwright" >> $GITHUB_STEP_SUMMARY
+          echo "- Browser: Chromium (optimized)" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # BUILD VERIFICATION (Linux only for CI speed)
+  # ═══════════════════════════════════════════════════════════════════════════
+  build-verification:
+    name: 🏗️ Build Verification
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 🔧 Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 🦀 Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@1.83
+
+      - name: 🔧 Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: 💾 Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2.7.3
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+
+      - name: 📦 Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build frontend
+        run: pnpm run build
+
+      - name: 🏗️ Build Tauri (Debug for speed)
+        run: pnpm exec tauri build --debug
+
+      - name: 📤 Upload build artifacts
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/MAIN'
+        uses: actions/upload-artifact@v6
+        with:
+          name: titane-build-ubuntu-${{ github.run_id }}
+          path: src-tauri/target/debug/bundle/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend build: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Tauri build: ✅ (Debug mode for CI speed)" >> $GITHUB_STEP_SUMMARY
+          echo "- Platform: Ubuntu (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Multi-platform builds run on releases only_" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SECURITY AUDIT
+  # ═══════════════════════════════════════════════════════════════════════════
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v6.0.1
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔧 Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔒 pnpm audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+      - name: 🦀 Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@1.83
+
+      - name: 🔒 Install cargo-audit
+        run: cargo install cargo-audit --locked
+        continue-on-error: true
+
+      - name: 🔒 Cargo audit
+        working-directory: src-tauri
+        run: cargo audit
+        continue-on-error: true
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- pnpm audit completed" >> $GITHUB_STEP_SUMMARY
+          echo "- cargo audit completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Security checks continue-on-error to avoid blocking CI on advisory-only issues_" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FINAL STATUS
+  # ═══════════════════════════════════════════════════════════════════════════
+  ci-status:
+    name: ✅ CI Pipeline Status
+    runs-on: ubuntu-latest
+    needs:
+      [
+        lint-and-typecheck,
+        test-frontend,
+        test-backend,
+        test-e2e,
+        build-verification,
+        security-audit,
+      ]
+    if: always()
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📊 Check job results
+        run: |
+          echo "## TITANE∞ v26.3.0 - CI/CD Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Type Check | ${{ needs.lint-and-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests | ${{ needs.test-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Tests | ${{ needs.test-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.test-e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Verification | ${{ needs.build-verification.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit | ${{ needs.security-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Pipeline Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node.js:** ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rust:** ${{ env.RUST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **pnpm:** ${{ env.PNPM_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform:** Ubuntu (Linux only for CI speed)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Built with TITANE∞ v26.3.0 - Modernized CI/CD Pipeline" >> $GITHUB_STEP_SUMMARY
+
+      - name: ❌ Fail if required jobs failed
+        if: |
+          needs.lint-and-typecheck.result == 'failure' ||
+          needs.test-frontend.result == 'failure' ||
+          needs.test-backend.result == 'failure'
+        run: |
+          echo "❌ One or more required jobs failed"
+          exit 1

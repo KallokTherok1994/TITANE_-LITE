@@ -1,0 +1,35 @@
+{
+  "name": "TITANE-Infinity",
+  "version": "26.2.0",
+  "buildDate": "2026-01-25T18:48:22.585Z",
+  "platform": "linux-x86_64",
+  "bundles": {
+    "appimage": {
+      "file": "TITANE-Infinity_26.2.0_amd64.AppImage",
+      "sha256": "3158b4d201d890ab17b4ab09737dbe5c5bf57f0d4655a31bd8d0ed1d7cc87d46",
+      "size": "81.6MB"
+    },
+    "deb": {
+      "file": "TITANE-Infinity_26.2.0_amd64.deb",
+      "sha256": "236f8cef99b6686b719a14f0d22be04ebd93c8769a81b22b51ea3f7b6cee9968",
+      "size": "9.5MB"
+    },
+    "binary": {
+      "file": "titane-infinity",
+      "sha256": "19ce8df54fe0443f99eea96333dae458f24b2683ebf1d37cc34f4973d11898d2",
+      "size": "21.6MB"
+    }
+  },
+  "features": [
+    "Multi-Provider AI (Ollama, OpenAI, Anthropic, Gemini)",
+    "Cognitive Operating System",
+    "Hooks Audit Complete (92/100 Type Safety)",
+    "Performance Optimized",
+    "Production Ready"
+  ],
+  "requirements": {
+    "os": "Linux x86_64",
+    "gtk": "3.x",
+    "webkit2gtk": "4.1"
+  }
+}

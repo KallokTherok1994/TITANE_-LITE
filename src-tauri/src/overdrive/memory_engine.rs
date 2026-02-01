@@ -1,0 +1,541 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// TITANE∞ v16 — OVERDRIVE MEMORY ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+// Moteur de mémoire conversationnelle avec embeddings + vector store
+// ═══════════════════════════════════════════════════════════════════════════
+
+use crate::core::tapi_error::TAPIError;
+use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
+use tauri::State;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STRUCTURES
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryEntry {
+    pub id: String,
+    pub content: String,
+    pub embedding: Vec<f32>,
+    pub metadata: MemoryMetadata,
+    pub timestamp: u64,
+    pub importance: f32, // 0.0-1.0
+    pub access_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryMetadata {
+    pub entry_type: String, // conversation|fact|skill|experience
+    pub tags: Vec<String>,
+    pub related_ids: Vec<String>,
+    pub source: String, // chat|voice|project|system
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryQuery {
+    pub query: String,
+    pub limit: usize,
+    pub min_similarity: f32,
+    pub filters: Option<Vec<String>>, // tags ou types
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryResult {
+    pub entry: MemoryEntry,
+    pub similarity: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryStats {
+    pub total_entries: usize,
+    pub total_tokens: u64,
+    pub vector_dimensions: usize,
+    pub index_size_mb: f32,
+    pub conversations_stored: usize,
+    pub facts_stored: usize,
+}
+
+pub struct MemoryEngineState {
+    entries: Arc<Mutex<Vec<MemoryEntry>>>,
+    index_built: Arc<Mutex<bool>>,
+    embedding_model: Arc<Mutex<String>>,
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INITIALISATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub fn init() -> MemoryEngineState {
+    MemoryEngineState {
+        entries: Arc::new(Mutex::new(Vec::new())),
+        index_built: Arc::new(Mutex::new(false)),
+        embedding_model: Arc::new(Mutex::new("nomic-embed-text".to_string())),
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STOCKAGE MÉMOIRE
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn memory_store(
+    content: String,
+    metadata: MemoryMetadata,
+    state: State<'_, MemoryEngineState>,
+) -> Result<String, TAPIError> {
+    // 🔒 SECURITY v19.3: Rate Limiting Check
+    // INTEGRATION: User ID from session context
+    // Backend: session_manager.get_current_user() -> String
+    // Sources:
+    //   1. Auth token: Extract user_id from JWT claims
+    //   2. Session storage: Read from SessionState.user_id
+    //   3. Default: "anonymous" for guest mode
+    // For multi-user: Separate memory/state per user_id
+    // For production: Implement SessionManager module
+    let user_id = "memory_user".to_string(); // Placeholder - awaiting SessionManager
+    if let Err(e) = crate::security::rate_limit::GLOBAL_RATE_LIMITER
+        .check(&user_id)
+        .await
+    {
+        let event = crate::security::AuditEvent::new(
+            crate::security::AuditEventType::RateLimitExceeded,
+            user_id.clone(),
+            serde_json::json!({ "entry_type": metadata.entry_type, "content_length": content.len() }),
+            crate::security::AuditSeverity::Warning.into(),
+        );
+        let _ = crate::security::audit::GLOBAL_AUDIT_LOGGER.log(event).await;
+        return Err(TAPIError::security(format!(
+            "Memory store rate limit: {}",
+            e
+        )));
+    }
+
+    let entry_id = uuid::Uuid::new_v4().to_string();
+
+    println!(
+        "[MEMORY] Stockage: {} - Type: {}",
+        content, metadata.entry_type
+    );
+
+    // Générer embedding
+    let embedding = generate_embedding(&content, &state).await?;
+
+    // Calculer importance
+    let importance = calculate_importance(&content, &metadata);
+
+    let entry = MemoryEntry {
+        id: entry_id.clone(),
+        content,
+        embedding,
+        metadata,
+        timestamp: get_timestamp(),
+        importance,
+        access_count: 0,
+    };
+
+    let mut entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_store, recovering");
+            poisoned.into_inner()
+        }
+    };
+    entries.push(entry);
+
+    // Marquer index comme à reconstruire
+    *match state.index_built.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] index_built lock poisoned, recovering");
+            poisoned.into_inner()
+        }
+    } = false;
+
+    Ok(entry_id)
+}
+
+#[tauri::command]
+pub async fn memory_store_conversation(
+    conversation_id: String,
+    messages: Vec<String>,
+    state: State<'_, MemoryEngineState>,
+) -> Result<usize, TAPIError> {
+    let mut stored = 0;
+
+    for message in messages {
+        let metadata = MemoryMetadata {
+            entry_type: "conversation".to_string(),
+            tags: vec!["chat".to_string()],
+            related_ids: vec![conversation_id.clone()],
+            source: "chat".to_string(),
+        };
+
+        memory_store(message, metadata, state.clone()).await?;
+        stored += 1;
+    }
+
+    println!(
+        "[MEMORY] {} messages stockés pour conversation {}",
+        stored, conversation_id
+    );
+    Ok(stored)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECHERCHE SÉMANTIQUE
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn memory_search(
+    query: MemoryQuery,
+    state: State<'_, MemoryEngineState>,
+) -> Result<Vec<MemoryResult>, TAPIError> {
+    println!(
+        "[MEMORY] Recherche: '{}' (limit: {})",
+        query.query, query.limit
+    );
+
+    // Générer embedding de la requête
+    let query_embedding = generate_embedding(&query.query, &state).await?;
+
+    // Recherche par similarité cosine
+    let entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_search, recovering");
+            poisoned.into_inner()
+        }
+    };
+    let mut results: Vec<MemoryResult> = Vec::new();
+
+    for entry in entries.iter() {
+        // Appliquer filtres
+        if let Some(filters) = &query.filters {
+            if !filters.contains(&entry.metadata.entry_type) {
+                continue;
+            }
+        }
+
+        // Calculer similarité
+        let similarity = cosine_similarity(&query_embedding, &entry.embedding);
+
+        if similarity >= query.min_similarity {
+            let mut entry_clone = entry.clone();
+            entry_clone.access_count += 1;
+
+            results.push(MemoryResult {
+                entry: entry_clone,
+                similarity,
+            });
+        }
+    }
+
+    // Trier par similarité décroissante
+    results.sort_by(|a, b| {
+        b.similarity
+            .partial_cmp(&a.similarity)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Limiter résultats
+    results.truncate(query.limit);
+
+    println!("[MEMORY] {} résultats trouvés", results.len());
+    Ok(results)
+}
+
+#[tauri::command]
+pub fn memory_get_related(
+    entry_id: String,
+    limit: usize,
+    state: State<MemoryEngineState>,
+) -> Result<Vec<MemoryEntry>, TAPIError> {
+    let entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_get_related, recovering");
+            poisoned.into_inner()
+        }
+    };
+
+    let base_entry = entries
+        .iter()
+        .find(|e| e.id == entry_id)
+        .ok_or_else(|| TAPIError::not_found("Entry introuvable"))?;
+
+    let mut related: Vec<(f32, MemoryEntry)> = Vec::new();
+
+    for entry in entries.iter() {
+        if entry.id == entry_id {
+            continue;
+        }
+
+        let similarity = cosine_similarity(&base_entry.embedding, &entry.embedding);
+        related.push((similarity, entry.clone()));
+    }
+
+    // Trier par similarité
+    related.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Extraire entries
+    let results: Vec<MemoryEntry> = related.into_iter().take(limit).map(|(_, e)| e).collect();
+
+    Ok(results)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTION INDEX
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn memory_rebuild_index(state: State<MemoryEngineState>) -> Result<String, TAPIError> {
+    println!("[MEMORY] Reconstruction index...");
+
+    // IMPLEMENTATION: Vector index for fast similarity search
+    // Algorithms:
+    //   1. HNSW (Hierarchical Navigable Small World) - Best accuracy
+    //   2. FAISS (Facebook AI Similarity Search) - Best performance
+    //   3. IVF (Inverted File Index) - Memory efficient
+    // Libraries:
+    //   - hnswlib-rs: Pure Rust HNSW (recommended)
+    //   - faiss-rs: Rust bindings to FAISS C++ library
+    //   - usearch: Universal similarity search (multi-language)
+    // Performance:
+    //   - HNSW: O(log n) search, 95%+ recall@10
+    //   - FAISS IVF: O(√n) search, configurable accuracy
+    // For production: Integrate hnswlib-rs or faiss-rs
+    // Current: Linear search O(n) - acceptable for < 10k entries
+
+    *match state.index_built.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] index_built lock poisoned in memory_rebuild_index, recovering");
+            poisoned.into_inner()
+        }
+    } = true;
+
+    Ok("Index reconstruit".to_string())
+}
+
+#[tauri::command]
+pub fn memory_get_stats(state: State<MemoryEngineState>) -> Result<MemoryStats, TAPIError> {
+    let entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_get_stats, recovering");
+            poisoned.into_inner()
+        }
+    };
+
+    let total_entries = entries.len();
+    let total_tokens: u64 = entries.iter().map(|e| e.content.len() as u64).sum();
+
+    let conversations_stored = entries
+        .iter()
+        .filter(|e| e.metadata.entry_type == "conversation")
+        .count();
+
+    let facts_stored = entries
+        .iter()
+        .filter(|e| e.metadata.entry_type == "fact")
+        .count();
+
+    let vector_dimensions = if entries.is_empty() {
+        0
+    } else {
+        entries[0].embedding.len()
+    };
+
+    let index_size_mb = (total_entries * vector_dimensions * 4) as f32 / 1024.0 / 1024.0;
+
+    Ok(MemoryStats {
+        total_entries,
+        total_tokens,
+        vector_dimensions,
+        index_size_mb,
+        conversations_stored,
+        facts_stored,
+    })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NETTOYAGE & OPTIMISATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn memory_prune(
+    min_importance: f32,
+    min_access_count: u32,
+    state: State<MemoryEngineState>,
+) -> Result<usize, TAPIError> {
+    let mut entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_prune, recovering");
+            poisoned.into_inner()
+        }
+    };
+    let initial_count = entries.len();
+
+    entries.retain(|e| e.importance >= min_importance || e.access_count >= min_access_count);
+
+    let removed = initial_count - entries.len();
+
+    println!("[MEMORY] Nettoyage: {} entrées supprimées", removed);
+    Ok(removed)
+}
+
+#[tauri::command]
+pub fn memory_delete(
+    entry_id: String,
+    state: State<MemoryEngineState>,
+) -> Result<String, TAPIError> {
+    let mut entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_delete, recovering");
+            poisoned.into_inner()
+        }
+    };
+    entries.retain(|e| e.id != entry_id);
+    Ok("Entrée supprimée".to_string())
+}
+
+// DISABLED: Conflit avec commands::memory_clear
+/*
+#[tauri::command]
+pub fn memory_clear(state: State<MemoryEngineState>) -> Result<String, String> {
+    let mut entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => { eprintln!("[MEMORY] entries lock poisoned"); poisoned.into_inner() }
+    };
+    entries.clear();
+    *match state.index_built.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => { eprintln!("[MEMORY] index_built lock poisoned"); poisoned.into_inner() }
+    } = false;
+    println!("[MEMORY] Mémoire complètement vidée");
+    Ok("Mémoire vidée".to_string())
+}
+*/
+// ─────────────────────────────────────────────────────────────────────────────
+// EMBEDDINGS
+// ─────────────────────────────────────────────────────────────────────────────
+
+async fn generate_embedding(_text: &str, state: &MemoryEngineState) -> Result<Vec<f32>, TAPIError> {
+    let _model = match state.embedding_model.lock() {
+        Ok(guard) => guard.clone(),
+        Err(poisoned) => {
+            eprintln!("[MEMORY] embedding_model lock poisoned, recovering");
+            poisoned.into_inner().clone()
+        }
+    };
+
+    // INTEGRATION: Ollama embeddings API (nomic-embed-text, mxbai-embed-large)
+    // Endpoint: POST http://localhost:11434/api/embeddings
+    // Request:
+    //   {"model": "nomic-embed-text", "prompt": text}
+    // Response:
+    //   {"embedding": [f32; 768]}
+    // Models:
+    //   - nomic-embed-text: 768-dim, multilingual, best quality
+    //   - mxbai-embed-large: 1024-dim, highest accuracy
+    // Setup: `ollama pull nomic-embed-text` (274MB download)
+    // Performance: ~50ms per embedding on GPU
+    // For production: Add reqwest HTTP client + error handling
+
+    // Simulation : vecteur de 768 dimensions (standard BERT/Nomic)
+    let embedding = vec![0.1; 768];
+
+    Ok(embedding)
+}
+
+fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+    if a.len() != b.len() {
+        return 0.0;
+    }
+
+    let dot_product: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
+    let magnitude_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+    let magnitude_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+
+    if magnitude_a == 0.0 || magnitude_b == 0.0 {
+        return 0.0;
+    }
+
+    dot_product / (magnitude_a * magnitude_b)
+}
+
+fn calculate_importance(content: &str, metadata: &MemoryMetadata) -> f32 {
+    let mut importance: f32 = 0.5; // Base
+
+    // Type de contenu
+    match metadata.entry_type.as_str() {
+        "fact" => importance += 0.3,
+        "skill" => importance += 0.2,
+        "experience" => importance += 0.1,
+        _ => {}
+    }
+
+    // Longueur du contenu (plus long = plus important)
+    if content.len() > 200 {
+        importance += 0.1;
+    }
+
+    // Tags spéciaux
+    if metadata.tags.contains(&"important".to_string()) {
+        importance += 0.2;
+    }
+
+    // Clamp à [0.0, 1.0]
+    importance.clamp(0.0, 1.0)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT/IMPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn memory_export(state: State<MemoryEngineState>) -> Result<Vec<MemoryEntry>, TAPIError> {
+    let entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_export, recovering");
+            poisoned.into_inner()
+        }
+    };
+    Ok(entries.clone())
+}
+
+#[tauri::command]
+pub fn memory_import(
+    entries: Vec<MemoryEntry>,
+    state: State<MemoryEngineState>,
+) -> Result<usize, TAPIError> {
+    let mut current_entries = match state.entries.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] entries lock poisoned in memory_import, recovering");
+            poisoned.into_inner()
+        }
+    };
+    let count = entries.len();
+    current_entries.extend(entries);
+    *match state.index_built.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[MEMORY] index_built lock poisoned in memory_import, recovering");
+            poisoned.into_inner()
+        }
+    } = false;
+    Ok(count)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILITAIRES
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn get_timestamp() -> u64 {
+    crate::core::utils::now_ms() / 1000
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Source environment variables (PATH avec node/npm)
+. "$(dirname "$0")/_env"
+
+echo "🔧 Pre-commit TITANE_INFINITY lancé..."
+
+node ./node_modules/.bin/lint-staged || {
+  echo "❌ Erreur lint-staged"
+  exit 1
+}
+
+# COPILOT-XS gate
+node ./.github/copilot-xs/scripts/precommit.js
