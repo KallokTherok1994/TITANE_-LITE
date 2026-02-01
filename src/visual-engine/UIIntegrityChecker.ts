@@ -425,7 +425,7 @@ export class UIIntegrityChecker {
           type: 'invalid_style',
           severity: 'high',
           message: `Critical CSS variable missing: ${varName}`,
-          location: { file: 'src/styles/css-vars.css' },
+          location: { file: 'src/styles/theme-tokens.css' },
           autoFixable: false,
         });
       }

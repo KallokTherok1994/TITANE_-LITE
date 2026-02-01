@@ -2,7 +2,7 @@
  * TITANE∞ v8.0 — DESIGN TOKENS (TypeScript)
  *
  * Type-safe access to design tokens for use in components
- * Synchronisé avec css-vars.css
+ * Synchronisé avec theme-tokens.css
  */
 
 /* ═══════════════════════════════════════════════════════════════ */

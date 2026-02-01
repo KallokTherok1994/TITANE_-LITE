@@ -36,7 +36,7 @@ import App from './App'; // ✅ App principal réactivé (AppMinimal validé)
 // Moved to async initialization in bootstrap() below
 
 // ✅ v8.0 DESIGN SYSTEM - Tailwind CSS + TITANE∞ Tokens
-import './index.css'; // 🎨 v8.0: Tailwind CSS + Design Tokens (css-vars.css)
+import './index.css'; // 🎨 v8.0: Tailwind CSS + Design Tokens (theme-tokens.css)
 
 // ✨ v25.7.4 RESPONSIVE DESIGN SYSTEM - Mobile-First Tokens & Utilities
 import './design-system/responsive-tokens.css'; // 🎯 Fluid spacing, typography, layout
