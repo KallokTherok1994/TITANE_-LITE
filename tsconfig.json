@@ -57,7 +57,6 @@
     "src/hooks/archived/**",
     "src/examples/**",
     "src/tests/**",
-    "src/stories/**",
     "src/modules/avatar/camera/**",
     "src/modules/avatar/core/AudioVisualSyncEngine.ts",
     "src/modules/avatar/floating/ThreeJSAvatarRenderer.ts",

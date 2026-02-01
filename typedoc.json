@@ -10,9 +10,7 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
-    "**/stories/**",
     "**/test/**",
-    "**/.storybook/**",
     "**/e2e/**"
   ],
   "tsconfig": "./tsconfig.json",
