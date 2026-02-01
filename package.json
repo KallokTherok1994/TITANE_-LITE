@@ -1,7 +1,7 @@
 {
   "name": "titane-lite",
-  "version": "27.0.0",
-  "description": "TITANE∞ LITE v27.0.0 - Cognitive Operating System: Production Final Release, Full Validation, Stable & Perfect",
+  "version": "27.2.0",
+  "description": "TITANE∞ LITE v27.2.0 - Cognitive Operating System: HMR Stabilization, CSS Token Consolidation, Production Optimized",
   "type": "module",
   "license": "SEE LICENSE.md",
   "packageManager": "pnpm@10.28.2",
