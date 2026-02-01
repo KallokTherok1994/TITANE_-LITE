@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 import type {
   HyperVisionState,
   SystemMetrics,
@@ -106,7 +107,7 @@ export function useHyperVision(
       setIsMonitoring(true);
 
       // Start polling
-      if (autoRefresh && !intervalRef.current) {
+      if (autoRefresh && !intervalRef.current && !isLiteMode()) {
         intervalRef.current = setInterval(async () => {
           await Promise.all([refreshMetrics(), refreshLayers(), refreshAnomalies()]);
         }, refreshInterval);

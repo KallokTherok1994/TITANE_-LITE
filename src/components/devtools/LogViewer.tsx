@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 
 interface LogEntry {
   timestamp: string;
@@ -30,6 +31,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   autoScroll = true,
   compact = false,
 }) => {
+  const liteMode = isLiteMode();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [filter, setFilter] = useState<'all' | 'debug' | 'info' | 'warn' | 'error'>(
     'all'
@@ -64,9 +66,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   // Poll logs every second
   useEffect(() => {
     fetchLogs();
+    if (liteMode) {
+      return;
+    }
     const interval = setInterval(fetchLogs, 1000);
     return () => clearInterval(interval);
-  }, [fetchLogs]);
+  }, [fetchLogs, liteMode]);
 
   // Filter logs by search term
   const filteredLogs = logs.filter(

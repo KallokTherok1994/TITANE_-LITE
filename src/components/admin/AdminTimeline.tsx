@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Clock,
@@ -306,7 +307,7 @@ export const AdminTimeline: React.FC<AdminTimelineProps> = ({
 
   // Auto-refresh
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || isLiteMode()) return;
 
     const intervalId = setInterval(loadData, refreshInterval);
     return () => clearInterval(intervalId);

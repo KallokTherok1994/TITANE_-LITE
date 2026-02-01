@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { PredictiveAlerts, PredictiveAlert } from '../../lib/predictiveAlerts';
 import { Activity, AlertTriangle, TrendingUp, Clock } from '../icons';
 
@@ -39,6 +40,7 @@ export const PredictiveAlertsDashboard: React.FC<PredictiveAlertsDashboardProps>
     };
 
     updateAlerts();
+    if (isLiteMode()) return;
     const interval = setInterval(updateAlerts, refreshInterval);
     return () => clearInterval(interval);
   }, [limit, minSeverity, refreshInterval]);

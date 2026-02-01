@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 
 interface CoreHealth {
   name: string;
@@ -39,6 +40,7 @@ export const CoreHealthMonitor: React.FC<CoreHealthMonitorProps> = ({
   refreshInterval = 3000,
   showDetails = true,
 }) => {
+  const liteMode = isLiteMode();
   const [coresHealth, setCoresHealth] = useState<Map<string, CoreHealth>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,9 +103,12 @@ export const CoreHealthMonitor: React.FC<CoreHealthMonitorProps> = ({
     };
 
     fetchCoresHealth();
+    if (liteMode) {
+      return;
+    }
     const interval = setInterval(fetchCoresHealth, refreshInterval);
     return () => clearInterval(interval);
-  }, [refreshInterval]);
+  }, [refreshInterval, liteMode]);
 
   // Get status indicator
   const getStatusIndicator = (status: CoreHealth['status']): string => {

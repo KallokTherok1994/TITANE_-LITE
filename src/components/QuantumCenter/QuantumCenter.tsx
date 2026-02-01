@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useIdentityMatrix } from '@/hooks/useIdentityMatrix';
 import { useSingularityStateSafe } from '@/hooks/useSingularityStateSafe';
@@ -81,7 +82,7 @@ const QuantumCenterContent: React.FC = () => {
 
   // Simulation des métriques en temps réel
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || isLiteMode()) return;
 
     const interval = setInterval(() => {
       const now = Date.now();

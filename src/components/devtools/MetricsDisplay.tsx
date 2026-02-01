@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 
 interface Metric {
   name: string;
@@ -28,6 +29,7 @@ export const MetricsDisplay: React.FC<MetricsDisplayProps> = ({
   refreshInterval = 2000,
   compact = false,
 }) => {
+  const liteMode = isLiteMode();
   const [categories, setCategories] = useState<MetricCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -95,9 +97,12 @@ export const MetricsDisplay: React.FC<MetricsDisplayProps> = ({
     };
 
     fetchMetrics();
+    if (liteMode) {
+      return;
+    }
     const interval = setInterval(fetchMetrics, refreshInterval);
     return () => clearInterval(interval);
-  }, [refreshInterval]);
+  }, [refreshInterval, liteMode]);
 
   // Get status color based on value and threshold
   const getStatusColor = (metric: Metric): string => {

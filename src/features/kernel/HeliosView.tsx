@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useHeliosSnapshot, useFetchHelios, useFetchHealth } from '../../stores/systemStore.selectors';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
@@ -20,6 +21,7 @@ export function HeliosView() {
     fetchHelios();
     fetchHealth();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchHelios();
       fetchHealth();

@@ -19,6 +19,7 @@
  */
 
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/environment';
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useSingularity } from '@/hooks/useSingularity';
 
@@ -925,6 +926,7 @@ export const SingularityDashboard = memo(function SingularityDashboard({
   // Refresh interval
   useEffect(() => {
     fetchSystemMetrics();
+    if (isLiteMode()) return;
     const interval = setInterval(fetchSystemMetrics, refreshInterval);
     return () => clearInterval(interval);
   }, [fetchSystemMetrics, refreshInterval]);

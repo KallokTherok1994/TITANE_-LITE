@@ -11,6 +11,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { tauriClient } from '../services/tauriClient';
 import type { SingularityState } from '../types/singularityState';
 
@@ -76,6 +77,7 @@ export function useEngineState(
     fetchState();
 
     // Poll régulier
+    if (isLiteMode()) return;
     const interval = setInterval(fetchState, pollInterval);
 
     return () => clearInterval(interval);

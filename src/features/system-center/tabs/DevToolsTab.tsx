@@ -15,6 +15,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 // 🔧 v20.1: Consolidated DevTools components (migrated from src/components/devtools/)
 import { LogViewer, MetricsDisplay, CoreHealthMonitor } from '@/apps/devtools/components';
 
@@ -200,7 +201,7 @@ const DebuggerPanel: React.FC = () => {
   const [events, setEvents] = useState<DebuggerEvent[]>([]);
   const [stats, setStats] = useState<DebuggerStats | null>(null);
   const [loading, setLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(() => !isLiteMode());
 
   const fetchDebugger = useCallback(async () => {
     try {
@@ -219,6 +220,9 @@ const DebuggerPanel: React.FC = () => {
   useEffect(() => {
     fetchDebugger();
     if (autoRefresh) {
+      if (isLiteMode()) {
+        return;
+      }
       const interval = setInterval(fetchDebugger, 2000);
       return () => clearInterval(interval);
     }

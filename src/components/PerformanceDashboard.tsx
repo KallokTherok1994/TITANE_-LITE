@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { logger } from '@/lib/logger';
 import { responseCache } from '@/services/cache/responseCache';
 import { predictivePreloader } from '@/services/cache/predictivePreloader';
@@ -68,6 +69,7 @@ export const PerformanceDashboard: React.FC<{ compact?: boolean }> = ({
     refreshMetrics();
 
     // Auto-refresh every 2 seconds
+    if (isLiteMode()) return;
     const interval = setInterval(refreshMetrics, 2000);
 
     return () => clearInterval(interval);

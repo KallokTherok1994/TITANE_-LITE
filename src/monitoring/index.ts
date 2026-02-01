@@ -13,6 +13,7 @@
  */
 
 import { createLogger } from '@/utils/logger';
+import { isLiteMode } from '@/utils/liteProfile';
 import type * as SentryTypes from '@sentry/react';
 import type { Metric } from 'web-vitals';
 
@@ -200,7 +201,9 @@ class MonitoringManager {
     if (typeof window === 'undefined') return;
     if (!(performance as { memory?: unknown }).memory) return;
 
-    // Track memory every 30 seconds
+    const intervalMs = isLiteMode() ? 60000 : 30000;
+
+    // Track memory every 30 seconds (60s in lite)
     setInterval(() => {
       const memory = (
         performance as { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }
@@ -216,7 +219,7 @@ class MonitoringManager {
           });
         }
       }
-    }, 30000);
+    }, intervalMs);
   }
 
   /**

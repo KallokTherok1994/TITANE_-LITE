@@ -12,6 +12,7 @@
 
 import { useState, useCallback } from 'react';
 import { audioService } from '@/features/audio-center/services/audioService';
+import { isLiteMode } from '@/utils/liteProfile';
 
 interface UseTTSReturn {
   speak: (text: string) => Promise<void>;
@@ -21,8 +22,10 @@ interface UseTTSReturn {
 
 export function useTTS(): UseTTSReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const liteMode = isLiteMode();
 
   const speak = useCallback(async (text: string) => {
+    if (liteMode) return;
     if (!text.trim()) return;
 
     setIsSpeaking(true);
@@ -33,14 +36,15 @@ export function useTTS(): UseTTSReturn {
     } finally {
       setIsSpeaking(false);
     }
-  }, []);
+  }, [liteMode]);
 
   const stop = useCallback(() => {
+    if (liteMode) return;
     audioService.stop();
     setIsSpeaking(false);
-  }, []);
+  }, [liteMode]);
 
-  return { speak, stop, isSpeaking };
+  return { speak, stop, isSpeaking: liteMode ? false : isSpeaking };
 }
 
 export default useTTS;

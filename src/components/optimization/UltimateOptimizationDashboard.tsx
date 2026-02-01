@@ -11,6 +11,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import {
   gpuAcceleratorV2,
   webAssemblyCompute,
@@ -112,6 +113,11 @@ export const UltimateOptimizationDashboard: React.FC<
     initialize();
 
     // Refresh metrics every 2 seconds
+    if (isLiteMode()) {
+      return () => {
+        mounted = false;
+      };
+    }
     const interval = setInterval(refreshMetrics, 2000);
 
     return () => {

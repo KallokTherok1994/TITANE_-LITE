@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/environment';
 import './RealityCenter.css';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -236,7 +237,7 @@ export const RealityCenter: React.FC = () => {
   }, [loadState]);
 
   useEffect(() => {
-    if (!autoRender) return;
+    if (!autoRender || isLiteMode()) return;
 
     const interval = setInterval(async () => {
       try {

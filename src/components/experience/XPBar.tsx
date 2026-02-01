@@ -10,6 +10,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { isLiteMode } from '@/utils/environment';
 import { XP } from '../../core/experience/XP_ENGINE';
 import { useState, useEffect } from 'react';
 import './XPBar.css';
@@ -39,6 +40,7 @@ export const XPBar = (): JSX.Element => {
     };
 
     updateBar();
+    if (isLiteMode()) return;
     const interval = setInterval(updateBar, 1000);
     return () => clearInterval(interval);
   }, [level]);

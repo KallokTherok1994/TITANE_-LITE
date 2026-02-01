@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import {
   useEvolutionActions,
   useEvolutionSnapshot,
@@ -27,6 +28,7 @@ export function EvolutionPipeline() {
     fetchState();
     quickHealthCheck();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchState();
       quickHealthCheck();

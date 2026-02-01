@@ -13,6 +13,7 @@ import {
   type VoiceProfile,
 } from '../types';
 import { audioService } from '../services/audioService';
+import { isLiteMode } from '@/utils/liteProfile';
 
 interface UseAudioReturn {
   // State
@@ -51,6 +52,7 @@ interface UseAudioReturn {
 }
 
 export function useAudio(): UseAudioReturn {
+  const liteMode = isLiteMode();
   const [config, setConfig] = useState<AudioConfiguration>(audioService.getConfig());
   const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([]);
   const [inputDevices, setInputDevices] = useState<AudioDevice[]>([]);
@@ -63,6 +65,10 @@ export function useAudio(): UseAudioReturn {
 
   // Load initial data
   useEffect(() => {
+    if (liteMode) {
+      setIsLoading(false);
+      return;
+    }
     const loadData = async () => {
       setIsLoading(true);
       try {
@@ -81,47 +87,62 @@ export function useAudio(): UseAudioReturn {
       }
     };
     loadData();
-  }, []);
+  }, [liteMode]);
 
   // TTS Settings
   const updateTTSSettings = useCallback(async (settings: Partial<TTSSettings>) => {
+    if (liteMode) return;
     await audioService.updateTTSSettings(settings);
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   // Speaking
   const speak = useCallback(async (text: string) => {
+    if (liteMode) return;
     await audioService.speak(text);
-  }, []);
+  }, [liteMode]);
 
   const stopSpeaking = useCallback(() => {
+    if (liteMode) return;
     audioService.stop();
-  }, []);
+  }, [liteMode]);
 
   // Device selection
   const setOutputDevice = useCallback(async (deviceId: string) => {
+    if (liteMode) return;
     await audioService.setOutputDevice(deviceId);
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   const setInputDevice = useCallback(async (deviceId: string) => {
+    if (liteMode) return;
     await audioService.setInputDevice(deviceId);
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   // Volume controls
   const setVolume = useCallback(async (volume: number) => {
+    if (liteMode) return;
     await audioService.updateOutputSettings({ volume });
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   const setMicGain = useCallback(async (gain: number) => {
+    if (liteMode) return;
     await audioService.updateInputSettings({ gain });
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   // Tests
   const testSpeaker = useCallback(async (text?: string): Promise<AudioTestResult> => {
+    if (liteMode) {
+      return {
+        success: false,
+        latencyMs: 0,
+        qualityScore: 0,
+        errorMessage: 'Audio disabled in lite profile',
+      };
+    }
     setIsTesting(true);
     setTestResult(null);
     try {
@@ -131,9 +152,18 @@ export function useAudio(): UseAudioReturn {
     } finally {
       setIsTesting(false);
     }
-  }, []);
+  }, [liteMode]);
 
   const testMicrophone = useCallback(async (): Promise<MicrophoneTestResult> => {
+    if (liteMode) {
+      return {
+        success: false,
+        peakLevel: 0,
+        noiseFloor: 0,
+        signalToNoise: 0,
+        errorMessage: 'Audio disabled in lite profile',
+      };
+    }
     console.log('[useAudio] testMicrophone starting...');
     setIsTesting(true);
     setTestResult(null);
@@ -156,10 +186,11 @@ export function useAudio(): UseAudioReturn {
     } finally {
       setIsTesting(false);
     }
-  }, []);
+  }, [liteMode]);
 
   // Refresh devices
   const refreshDevices = useCallback(async () => {
+    if (liteMode) return;
     setIsLoading(true);
     try {
       const [outputs, inputs] = await Promise.all([
@@ -173,13 +204,14 @@ export function useAudio(): UseAudioReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [liteMode]);
 
   // v24.7 - Balance control
   const setBalance = useCallback(async (balance: number) => {
+    if (liteMode) return;
     await audioService.updateOutputSettings({ balance });
     setConfig(audioService.getConfig());
-  }, []);
+  }, [liteMode]);
 
   // v24.7 - Input processing options
   const setInputOption = useCallback(
@@ -187,10 +219,11 @@ export function useAudio(): UseAudioReturn {
       option: 'noiseSuppression' | 'echoCancellation' | 'autoGainControl',
       value: boolean
     ) => {
+      if (liteMode) return;
       await audioService.updateInputSettings({ [option]: value });
       setConfig(audioService.getConfig());
     },
-    []
+    [liteMode]
   );
 
   return {

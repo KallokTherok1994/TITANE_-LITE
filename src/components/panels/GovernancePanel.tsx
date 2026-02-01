@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useVisualState } from '@/hooks/useVisualState';
 import { useVisualStateStore } from '@/stores/visualStateStore';
 import { usePanelState } from '@/hooks/usePanelState';
@@ -146,6 +147,7 @@ export const GovernancePanel: React.FC<GovernancePanelProps> = ({ className = ''
     loadReport();
 
     // Refresh every 60 seconds
+    if (isLiteMode()) return;
     const interval = setInterval(loadReport, 60000);
 
     return () => clearInterval(interval);

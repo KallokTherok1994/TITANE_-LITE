@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { logger } from '@/lib/logger';
 import type { PersonaState } from '@/types/singularityState';
 import type { MoodType } from '../core/ARCHITECTURE_TYPES_v24-v∞';
@@ -218,7 +219,7 @@ export const useLivingEngines = (updateInterval = 100) => {
 
     void updateOnce();
 
-    if (!pollingEnabled) {
+    if (!pollingEnabled || isLiteMode()) {
       return;
     }
 

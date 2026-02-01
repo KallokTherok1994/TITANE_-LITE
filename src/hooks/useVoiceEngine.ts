@@ -38,6 +38,7 @@ import {
   type FullDuplexState,
 } from '@/services/voice/fullDuplexOrchestrator';
 import { haloEngine } from '@/services/voice/haloEngine'; // ✅ v∞.7 Halo sync
+import { isLiteMode } from '@/utils/liteProfile';
 
 type MicrophoneProbeState = {
   lastAt: number;
@@ -220,6 +221,7 @@ export function useVoiceEngine(
   options: UseVoiceEngineOptions = {}
 ): UseVoiceEngineReturn {
   const { language = 'fr-FR', onTranscript, onError } = options;
+  const liteMode = isLiteMode();
 
   // ✅ Chat IA integration for voice turns
   const chat = useChat();
@@ -247,6 +249,20 @@ export function useVoiceEngine(
 
   useEffect(() => {
     mountedRef.current = true;
+
+    if (liteMode) {
+      setStatus(prev => ({
+        ...prev,
+        isMicAvailable: false,
+        isTTSAvailable: false,
+        listeningMode: 'off',
+        attentionState: 'inactive',
+      }));
+
+      return () => {
+        mountedRef.current = false;
+      };
+    }
 
     const checkCapabilities = async () => {
       try {
@@ -311,7 +327,7 @@ export function useVoiceEngine(
       unsubscribe();
       unsubscribeAttention();
     };
-  }, []);
+  }, [liteMode]);
 
   // ═══ ERROR HANDLING ═══
 
@@ -533,6 +549,10 @@ export function useVoiceEngine(
    * ✅ v∞.7: Manual mode only (no VAD auto-start in Chat mode)
    */
   const startTurn = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] startTurn disabled in lite profile');
+      return;
+    }
     // ✅ SAFE GUARD: Prevent restart if not idle
     if (status.state !== 'idle') {
       console.warn('[useVoiceEngine] Cannot start turn: state =', status.state);
@@ -550,13 +570,17 @@ export function useVoiceEngine(
       // Error already handled in startRecordingInternal
       audioStateMachine.reset();
     }
-  }, [status.state, startRecordingInternal]);
+  }, [liteMode, status.state, startRecordingInternal]);
 
   /**
    * ✅ NOUVEAU v19.4 : Complete turn with IA + TTS
    * Call this after recording stops (manual or VAD)
    */
   const completeTurn = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] completeTurn disabled in lite profile');
+      return;
+    }
     try {
       console.log('[useVoiceEngine] 📝 Completing turn...');
 
@@ -581,7 +605,7 @@ export function useVoiceEngine(
         'completeTurn'
       );
     }
-  }, [stopRecordingInternal, processTurnWithAI, handleError]);
+  }, [liteMode, stopRecordingInternal, processTurnWithAI, handleError]);
 
   /**
    * ✅ NOUVEAU v19.4 : Complete turn with pre-transcribed text (one-shot)
@@ -589,6 +613,10 @@ export function useVoiceEngine(
    */
   const completeTurnWithText = useCallback(
     async (text: string) => {
+      if (liteMode) {
+        console.warn('[useVoiceEngine] completeTurnWithText disabled in lite profile');
+        return;
+      }
       try {
         console.log('[useVoiceEngine] 📝 Completing turn with text:', text);
 
@@ -620,13 +648,17 @@ export function useVoiceEngine(
         );
       }
     },
-    [processTurnWithAI, handleError]
+    [liteMode, processTurnWithAI, handleError]
   );
 
   /**
    * ✅ REFACTORÉ v19.3.1 : Cancel avec VoiceRouter
    */
   const cancelTurn = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] cancelTurn disabled in lite profile');
+      return;
+    }
     try {
       console.log('[useVoiceEngine] 🛑 Cancelling turn, state:', status.state);
 
@@ -670,11 +702,15 @@ export function useVoiceEngine(
       }
       audioStateMachine.reset();
     }
-  }, [status.isRecording, status.state]);
+  }, [liteMode, status.isRecording, status.state]);
 
   // ═══ MODE DICTATION (texte seul, sans IA) ═══
 
   const startDictation = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] startDictation disabled in lite profile');
+      return;
+    }
     if (status.state !== 'idle') {
       console.warn('[useVoiceEngine] Cannot start dictation: not idle');
       return;
@@ -688,9 +724,13 @@ export function useVoiceEngine(
     } catch (err) {
       // Error already handled
     }
-  }, [status.state, startRecordingInternal]);
+  }, [liteMode, status.state, startRecordingInternal]);
 
   const stopDictation = useCallback(async (): Promise<string> => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] stopDictation disabled in lite profile');
+      return '';
+    }
     if (!status.isRecording) {
       console.warn('[useVoiceEngine] No dictation in progress');
       return '';
@@ -712,12 +752,16 @@ export function useVoiceEngine(
     } catch (err) {
       return '';
     }
-  }, [status.isRecording, stopRecordingInternal]);
+  }, [liteMode, status.isRecording, stopRecordingInternal]);
 
   // ═══ TTS ═══
 
   const speak = useCallback(
     async (text: string) => {
+      if (liteMode) {
+        console.warn('[useVoiceEngine] speak disabled in lite profile');
+        return;
+      }
       if (!text.trim()) {
         console.warn('[useVoiceEngine] Empty text, skipping TTS');
         return;
@@ -741,10 +785,14 @@ export function useVoiceEngine(
         handleError(err instanceof Error ? err : new Error(String(err)), 'speak');
       }
     },
-    [handleError]
+    [liteMode, handleError]
   );
 
   const stopSpeaking = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] stopSpeaking disabled in lite profile');
+      return;
+    }
     try {
       await hybridTTS.stop();
 
@@ -757,7 +805,7 @@ export function useVoiceEngine(
     } catch (err) {
       console.error('[useVoiceEngine] Stop speaking error:', err);
     }
-  }, []);
+  }, [liteMode]);
 
   // ═══ UTILITIES ═══
 
@@ -784,6 +832,10 @@ export function useVoiceEngine(
   // ═══ WAKE WORD & ATTENTION (v19.4) ═══
 
   const activateWakeWord = useCallback(() => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] wake word disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🎙️ Activating wake word mode');
     attentionEngine.activate();
     setStatus(prev => ({
@@ -791,9 +843,13 @@ export function useVoiceEngine(
       listeningMode: 'wake_word',
       attentionState: 'armed',
     }));
-  }, []);
+  }, [liteMode]);
 
   const deactivateWakeWord = useCallback(() => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] wake word disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🔇 Deactivating wake word mode');
     attentionEngine.deactivate();
     setStatus(prev => ({
@@ -801,9 +857,13 @@ export function useVoiceEngine(
       listeningMode: 'off',
       attentionState: 'inactive',
     }));
-  }, []);
+  }, [liteMode]);
 
   const setPushToTalk = useCallback(() => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] push-to-talk disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🎤 Switching to push-to-talk');
     attentionEngine.setPushToTalk();
     setStatus(prev => ({
@@ -811,19 +871,29 @@ export function useVoiceEngine(
       listeningMode: 'push_to_talk',
       attentionState: 'inactive',
     }));
-  }, []);
+  }, [liteMode]);
 
   const getListeningMode = useCallback(() => {
+    if (liteMode) {
+      return 'off';
+    }
     return attentionEngine.getMode();
-  }, []);
+  }, [liteMode]);
 
   const getAttentionState = useCallback(() => {
+    if (liteMode) {
+      return 'inactive';
+    }
     return attentionEngine.getState();
-  }, []);
+  }, [liteMode]);
 
   // ═══ FULL DUPLEX (v∞.5) ═══
 
   const enableFullDuplex = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] full duplex disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🔄 Enabling full duplex mode');
     await fullDuplexOrchestrator.enable();
     setStatus(prev => ({
@@ -831,9 +901,13 @@ export function useVoiceEngine(
       fullDuplexMode: true,
       fullDuplexState: fullDuplexOrchestrator.getState(),
     }));
-  }, []);
+  }, [liteMode]);
 
   const disableFullDuplex = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] full duplex disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🔇 Disabling full duplex mode');
     await fullDuplexOrchestrator.disable();
     setStatus(prev => ({
@@ -841,15 +915,23 @@ export function useVoiceEngine(
       fullDuplexMode: false,
       fullDuplexState: undefined,
     }));
-  }, []);
+  }, [liteMode]);
 
   const interrupt = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] interrupt disabled in lite profile');
+      return;
+    }
     console.log('[useVoiceEngine] 🚨 User interruption');
     await fullDuplexOrchestrator.interrupt();
-  }, []);
+  }, [liteMode]);
 
   const injectInterruption = useCallback(
     async (text: string) => {
+      if (liteMode) {
+        console.warn('[useVoiceEngine] injectInterruption disabled in lite profile');
+        return;
+      }
       console.log('[useVoiceEngine] 💬 Inject interruption:', text);
       await fullDuplexOrchestrator.injectInterruption(text);
 
@@ -859,7 +941,7 @@ export function useVoiceEngine(
         await chat.sendMessage(`[INTERRUPTED] ${text}`);
       }
     },
-    [chat]
+    [liteMode, chat]
   );
 
   // ═══ EMERGENCY RESET (v∞.7) ═══
@@ -869,6 +951,10 @@ export function useVoiceEngine(
    * Kills all processes, clears state, resets flags
    */
   const forceVoiceReset = useCallback(async () => {
+    if (liteMode) {
+      console.warn('[useVoiceEngine] forceVoiceReset disabled in lite profile');
+      return;
+    }
     try {
       console.warn('[useVoiceEngine] 🔥 FORCE RESET VOICE ENGINE');
 
@@ -911,10 +997,13 @@ export function useVoiceEngine(
         }));
       }
     }
-  }, [cancelTurn, status.isMicAvailable, status.isTTSAvailable, status.fullDuplexMode]);
+  }, [liteMode, cancelTurn, status.isMicAvailable, status.isTTSAvailable, status.fullDuplexMode]);
 
   // Subscribe to full duplex events
   useEffect(() => {
+    if (liteMode) {
+      return;
+    }
     if (!options.fullDuplexMode) {
       return;
     }
@@ -931,7 +1020,7 @@ export function useVoiceEngine(
     });
 
     return unsubscribe;
-  }, [options.fullDuplexMode]);
+  }, [liteMode, options.fullDuplexMode]);
 
   return {
     status,

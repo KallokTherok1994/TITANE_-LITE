@@ -10,6 +10,7 @@
 // Cliquer → ouvre ExpPanel complet
 
 import React, { useState, useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { secureInvoke } from '@/lib/security';
 import { logger } from '@/lib/logger';
 import { REFRESH_INTERVALS } from '@/constants/timeouts';
@@ -34,6 +35,7 @@ export const GlobalExpBar: React.FC<{ onOpenPanel: () => void }> = ({ onOpenPane
 
   useEffect(() => {
     fetchExpState();
+    if (isLiteMode()) return;
     const interval = setInterval(fetchExpState, REFRESH_INTERVALS.NORMAL); // Refresh toutes les 5s
     return () => clearInterval(interval);
   }, []);

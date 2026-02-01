@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { logger } from '@/lib/logger';
+import { isLiteMode } from '@/utils/environment';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity,
@@ -365,7 +366,7 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
 
   // Rafraîchissement automatique
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || isLiteMode()) return;
 
     const interval = setInterval(refresh, refreshInterval);
     refresh(); // Initial

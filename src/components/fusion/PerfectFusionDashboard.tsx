@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useSingularitySync } from '@/hooks/useSingularitySync';
 import { useMemoryEngine } from '@/hooks/useMemoryEngine';
 import { useSystemHealth } from '@/hooks/useSystemHealth';
@@ -94,6 +95,7 @@ export function PerfectFusionDashboard() {
     loadOptimizationMetrics();
 
     // Refresh every 5s
+    if (isLiteMode()) return;
     const interval = setInterval(loadOptimizationMetrics, 5000);
     return () => clearInterval(interval);
   }, []);

@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useCallback, useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { secureInvoke } from '@/lib/security';
 import type {
   DeveloperModeState,
@@ -379,6 +380,7 @@ export function useEnginesDashboard() {
 
   useEffect(() => {
     fetchDashboard();
+    if (isLiteMode()) return;
     const interval = setInterval(fetchDashboard, 10000);
     return () => clearInterval(interval);
   }, [fetchDashboard]);

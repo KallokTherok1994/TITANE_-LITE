@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { logger } from '@/lib/logger';
 import { ServiceMetrics } from '../../lib/serviceMetrics';
 import { ArrowUp, ArrowDown, Clock, AlertCircle, Activity } from 'lucide-react';
@@ -69,7 +70,7 @@ export const CommandStatsTable: React.FC<CommandStatsTableProps> = ({
   useEffect(() => {
     loadStats();
 
-    if (autoRefresh) {
+    if (autoRefresh && !isLiteMode()) {
       const interval = setInterval(loadStats, refreshInterval);
       return () => clearInterval(interval);
     }

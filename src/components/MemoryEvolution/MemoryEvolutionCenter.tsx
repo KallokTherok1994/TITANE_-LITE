@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { secureInvoke } from '@/lib/security';
 import { logger } from '@/lib/logger';
 import './MemoryEvolutionCenter.css';
@@ -499,6 +500,7 @@ export const MemoryEvolutionCenter: React.FC = () => {
     fetchClusters();
 
     // Auto-refresh every 30s
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchStatus();
       fetchHealth();

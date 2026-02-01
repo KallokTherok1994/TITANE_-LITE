@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
 import { useQAMonitoring } from './useQAMonitoring';
@@ -883,6 +884,7 @@ function QAMonitoringPageContent(): JSX.Element {
       // noop
     }
 
+    if (isLiteMode()) return;
     const interval = window.setInterval(() => {
       try {
         setFrontendMetrics(monitoring.getMetrics());

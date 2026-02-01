@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '../../ui';
 import { colors, spacing, radius, shadows, fontSizes } from '@themes/tokens';
 import { apiResponseCache } from '@/services/ai/apiCache';
+import { isLiteMode } from '@/utils/liteProfile';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -97,7 +98,7 @@ export const ProviderStatusPanel = (): JSX.Element => {
     }
 
     const enabled = import.meta.env.DEV || envEnabled || userEnabled;
-    if (!enabled) {
+    if (!enabled || isLiteMode()) {
       return;
     }
 

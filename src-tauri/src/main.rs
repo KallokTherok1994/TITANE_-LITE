@@ -11,6 +11,8 @@
 #![allow(dead_code)]
 #![allow(deprecated)] // Migration to conversation_engine::conversation_generate in progress
 
+extern crate titane_lite as titane_infinity;
+
 // ═══════════════════════════════════════════════════════════════
 // TITANE∞ HARDENING: Import Hygiene v19.5.2
 // DO NOT REMOVE: Each import is actively used in production code
@@ -530,7 +532,25 @@ fn main() {
     // Initialize Multi-IA Orchestrator v∞ (SUPER PROMPT #8)
     let multi_ai_orchestrator = OrchestratorState::new();
 
-    let builder = tauri::Builder::default()
+    fn optional_features_enabled() -> bool {
+        let minimal_flag = std::env::var("TITANE_LITE_MINIMAL")
+            .ok()
+            .map(|v| {
+                let v = v.trim().to_ascii_lowercase();
+                v == "1" || v == "true" || v == "yes" || v == "on"
+            })
+            .unwrap_or(false);
+
+        let lite_profile_minimal = std::env::var("TITANE_LITE_PROFILE")
+            .ok()
+            .map(|v| v.trim().to_ascii_lowercase())
+            .map(|v| v == "ultra_lite" || v == "lite")
+            .unwrap_or(false);
+
+        !(minimal_flag || lite_profile_minimal)
+    }
+
+    let mut builder = tauri::Builder::default()
         .manage(app_state)
         .manage(singularity_cortex)
         .manage(multi_ai_orchestrator)
@@ -539,18 +559,24 @@ fn main() {
         .manage(chat_orchestrator.clone())
         .manage(helios_core)
         .manage(memory_core)
-        .manage(avatar::AvatarEngineGlobal::default())
-        .manage(singularity_fusion::AutoFixState::default())
-        .manage(singularity_fusion::AutoHealState::default())
-        .manage(singularity_fusion::CrashGuardState::default())
-        .manage(singularity_fusion::PerformanceState::default())
-        .manage(singularity_fusion::UnifiedPipelineState::default())
         .manage(state_bridge_commands::FrontendStateStore::default());
 
-    // EXP FUSION ENGINE (XP/EXP UI)
-    let builder = builder.manage(ExpFusionState::new());
+    if optional_features_enabled() {
+        builder = builder
+            .manage(avatar::AvatarEngineGlobal::default())
+            .manage(singularity_fusion::AutoFixState::default())
+            .manage(singularity_fusion::AutoHealState::default())
+            .manage(singularity_fusion::CrashGuardState::default())
+            .manage(singularity_fusion::PerformanceState::default())
+            .manage(singularity_fusion::UnifiedPipelineState::default());
+    } else {
+        log::info!("⚡ TITANE_LITE_MINIMAL=1: optional engines disabled");
+    }
 
-    builder
+    // EXP FUSION ENGINE (XP/EXP UI)
+    builder = builder.manage(ExpFusionState::new());
+
+    let builder = builder
         .manage(std::sync::Mutex::new(onboarding::OnboardingState::default()))
         .setup(move |app| {
             // 🔐 Initialize Auth OS v∞ (Unified Authentication System)
@@ -708,8 +734,10 @@ fn main() {
                 window.label(),
                 payload.url()
             );
-        })
-        .invoke_handler(tauri::generate_handler![
+        });
+
+    let builder = if optional_features_enabled() {
+        builder.invoke_handler(tauri::generate_handler![
             // Frontend OS bridge compatibility
             state_bridge_commands::ping,
             state_bridge_commands::get_system_state,
@@ -1168,6 +1196,136 @@ fn main() {
             fusion_commands_week4::fusion_update_state,
             fusion_commands_week4::fusion_auto_optimize,
         ])
+    } else {
+        builder.invoke_handler(tauri::generate_handler![
+            // Frontend OS bridge compatibility
+            state_bridge_commands::ping,
+            state_bridge_commands::get_system_state,
+            state_bridge_commands::get_module_health,
+            state_bridge_commands::system_get_status,
+            state_bridge_commands::get_state,
+            state_bridge_commands::set_state,
+            state_bridge_commands::delete_state,
+
+            // Core messaging
+            send_message,
+            ollama_query,
+            // OMEGA Conversation Engine Commands (v19.5.2)
+            conversation_engine::commands::create_new_conversation,
+            conversation_engine::commands::conversation_generate,
+            conversation_engine::commands::conversation_process_message,
+            conversation_engine::commands::conversation_health_check,
+            conversation_engine::commands::conversation_memory_stats,
+            // Chat Orchestrator Commands (CHAT PIPELINE v21 + R04 Memory Integration)
+            overdrive::chat_orchestrator::chat_send_message,
+            overdrive::chat_orchestrator::chat_stream_message,
+            overdrive::chat_orchestrator::chat_get_providers_status,
+            overdrive::chat_orchestrator::chat_check_providers,
+            overdrive::chat_orchestrator::chat_get_conversation,
+            overdrive::chat_orchestrator::chat_create_conversation,
+            overdrive::chat_orchestrator::chat_delete_conversation,
+            overdrive::chat_orchestrator::chat_generate_suggestions,
+            overdrive::chat_orchestrator::chat_get_memory_stats,
+
+            // Secure API Key Management (v∞ - Super-Prompts H, I, J, K)
+            // ✅ v21 Phase 1: Réactivation Gemini
+            secure_commands::chat_set_gemini_key,
+            secure_commands::get_gemini_key_status,
+            secure_commands::chat_set_openai_key,
+            secure_commands::get_openai_key_status,
+            secure_commands::chat_set_anthropic_key,
+            secure_commands::get_anthropic_key_status,
+            secure_commands::get_permission_audit,
+            secure_commands::check_system_integrity,
+            // Runtime Configuration Bridge v∞ (Frontend config without secrets)
+            runtime_config::get_runtime_config,
+            // ✅ v21 Phase 1: Provider-specific AI generation
+            commands::chat_generate_commands::chat_generate_gemini,
+            commands::chat_generate_commands::chat_generate_openai,
+            commands::chat_generate_commands::chat_generate_claude,
+            // ✨ v26.3: GitHub Copilot provider
+            commands::copilot_commands::chat_generate_copilot,
+            commands::copilot_commands::chat_set_copilot_key,
+            commands::copilot_commands::get_copilot_key_status,
+            commands::copilot_commands::test_copilot_connection,
+            // Ollama AI Provider Status Check
+            titane_infinity::ai::ollama::ai_check_ollama_status,
+
+            // Auth OS Commands v∞ (Unified Authentication System)
+            auth::commands::auth_get_status,
+            auth::commands::auth_generate_dev_token,
+            auth::commands::auth_validate_dev_token,
+            auth::commands::auth_revoke_dev_token,
+            auth::commands::auth_save_api_keys,
+            auth::commands::auth_get_api_keys,
+            auth::commands::auth_delete_api_key,
+            auth::commands::auth_grant_role,
+            auth::commands::auth_revoke_role,
+
+            // Memory API Commands (Storage + Timeline)
+            api::memory_api::get_memory_state,
+            api::memory_api::write_snapshot,
+            api::memory_api::read_snapshot,
+            api::memory_api::write_log,
+            api::memory_api::read_logs,
+            api::memory_api::add_timeline_event,
+            api::memory_api::memory_get_active_projects,
+            api::memory_api::memory_get_recent_decisions,
+
+            // Unified Memory Commands (6 commands)
+            unified_memory_commands::memory_get_state,
+            unified_memory_commands::memory_store,
+            unified_memory_commands::memory_recall,
+            unified_memory_commands::memory_get_stats,
+            unified_memory_commands::memory_initialize,
+            unified_memory_commands::memory_tick,
+
+            // Memory OS Commands (5 commands)
+            commands_v21::memory_os_commands::memory_clear,
+            commands_v21::memory_os_commands::memory_promote,
+            commands_v21::memory_os_commands::memory_demote,
+            commands_v21::memory_os_commands::memory_delete,
+            commands_v21::memory_os_commands::memory_prune,
+
+            // Persistent Memory Commands (4 commands)
+            commands_v21::persistent_memory_commands::persistent_memory_promote_entry,
+            commands_v21::persistent_memory_commands::persistent_memory_archive_entry,
+            commands_v21::persistent_memory_commands::persistent_memory_delete_entry,
+            commands_v21::persistent_memory_commands::persistent_memory_add_to_bundle,
+
+            // Titan Persistence Commands (26 commands) - 100% SAVE System
+            persistence::commands::titan_persistence_init,
+            persistence::commands::titan_persist_event,
+            persistence::commands::titan_force_snapshot,
+            persistence::commands::titan_get_persistence_status,
+            persistence::commands::titan_check_integrity,
+            persistence::commands::titan_compact_journal,
+            persistence::commands::titan_load_state,
+            persistence::commands::titan_get_events_since,
+            persistence::commands::titan_list_snapshots,
+            persistence::commands::titan_recover_state,
+            persistence::commands::titan_verify_integrity,
+            persistence::commands::titan_persistence_shutdown,
+            persistence::commands::titan_migrate_state,
+            persistence::commands::titan_get_schema_version,
+            persistence::commands::titan_export_data,
+            persistence::commands::titan_validate_archive,
+            persistence::commands::titan_import_data,
+            persistence::commands::titan_get_memory_health,
+            persistence::commands::titan_run_self_healing,
+            persistence::commands::titan_reset_module,
+            persistence::commands::titan_dump_raw_state,
+            persistence::commands::titan_run_full_integrity_check,
+            persistence::commands::titan_memory_doctor_diagnose,
+            persistence::commands::titan_memory_doctor_summary,
+            persistence::commands::titan_memory_doctor_heal,
+            persistence::commands::titan_memory_doctor_compact,
+            persistence::commands::titan_memory_doctor_export,
+            persistence::commands::titan_import_latest_from_dir,
+        ])
+    };
+
+    builder
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
             eprintln!("❌ TITANE∞ FATAL: Tauri application failed to start");

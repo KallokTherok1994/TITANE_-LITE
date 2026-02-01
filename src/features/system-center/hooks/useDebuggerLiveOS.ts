@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 import {
   formatUserError,
   sanitizeErrorForUser,
@@ -775,7 +776,7 @@ export function useDebuggerLiveOS(): UseDebuggerLiveOSReturn {
         addToHistory('debugger_started', { mode });
 
         // Setup auto-refresh if enabled
-        if (newConfig.autoRefresh && newConfig.refreshInterval) {
+        if (newConfig.autoRefresh && newConfig.refreshInterval && !isLiteMode()) {
           refreshIntervalRef.current = setInterval(() => {
             if (mode === 'LiveMonitor') {
               refreshLiveMetrics();

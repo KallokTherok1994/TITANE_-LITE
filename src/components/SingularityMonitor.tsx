@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { secureInvoke } from '@/lib/security';
 import { logger } from '@/lib/logger';
 import type { EngineMetrics, ModuleInfo } from '../types/tauri';
@@ -28,6 +29,7 @@ export function SingularityMonitor() {
         }
 
         // Poll engine state
+        if (isLiteMode()) return;
         interval = setInterval(async () => {
           if (!mounted) return;
 

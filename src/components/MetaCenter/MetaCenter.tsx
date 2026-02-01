@@ -14,6 +14,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useIdentityMatrix } from '@/hooks/useIdentityMatrix';
 import { useSingularityStateSafe } from '@/hooks/useSingularityStateSafe';
 import { REFRESH_INTERVALS } from '@/constants/timeouts';
+import { isLiteMode } from '@/utils/environment';
 import './MetaCenter.css';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -212,7 +213,7 @@ const MetaCenterContent: React.FC = () => {
 
   // Auto-refresh
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || isLiteMode()) return;
     const interval = setInterval(loadState, REFRESH_INTERVALS.NORMAL);
     return () => clearInterval(interval);
   }, [autoRefresh]);

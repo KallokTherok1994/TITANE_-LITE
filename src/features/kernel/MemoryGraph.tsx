@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import {
   useMemoryState,
   useLogs,
@@ -26,6 +27,7 @@ export function MemoryGraph() {
     fetchLogs(50);
     fetchTelemetry();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchState();
     }, 5000); // Update every 5s

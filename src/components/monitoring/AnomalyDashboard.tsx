@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { logger } from '@/lib/logger';
 import { AnomalyDetector, type AnomalyDetection } from '../../lib/anomalyDetector';
 import { AlertTriangle, TrendingUp, Clock, Activity } from '../icons';
@@ -52,7 +53,7 @@ export const AnomalyDashboard: React.FC<AnomalyDashboardProps> = ({
   useEffect(() => {
     loadData();
 
-    if (autoRefresh) {
+    if (autoRefresh && !isLiteMode()) {
       const interval = setInterval(loadData, refreshInterval);
       return () => clearInterval(interval);
     }

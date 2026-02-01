@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { logger } from '@/lib/logger';
 import { ServiceMetrics } from '../../lib/serviceMetrics';
 import { MetricsCard } from './MetricsCard';
@@ -54,7 +55,7 @@ export const ServiceMetricsPanel: React.FC<ServiceMetricsPanelProps> = ({
   useEffect(() => {
     loadStats();
 
-    if (autoRefresh) {
+    if (autoRefresh && !isLiteMode()) {
       const interval = setInterval(loadStats, refreshInterval);
       return () => clearInterval(interval);
     }

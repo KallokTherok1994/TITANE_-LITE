@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { bootSafetyLock } from '../utils/bootSafetyLock';
 import { titaneQuantumIntelligence } from '../utils/quantumIntelligence';
 import { titaneSelfHealing } from '../utils/selfHealingSystem';
@@ -235,6 +236,7 @@ const SystemIntegrationHub: React.FC<SystemIntegrationHubProps> = ({
 
   // Système de monitoring intégré
   useEffect(() => {
+    if (isLiteMode()) return;
     // Démarrer la boucle d'intégration
     integrationLoop(); // Première exécution
     const interval = setInterval(integrationLoop, 3000); // Toutes les 3 secondes

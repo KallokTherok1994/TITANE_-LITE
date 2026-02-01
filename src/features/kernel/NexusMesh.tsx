@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useNexusSnapshot, useFetchNexus } from '../../stores/systemStore.selectors';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
@@ -17,6 +18,7 @@ export function NexusMesh() {
   useEffect(() => {
     fetchNexus();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchNexus();
     }, 3000); // Update every 3s

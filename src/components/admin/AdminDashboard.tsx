@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity,
@@ -264,7 +265,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Polling
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || isLiteMode()) return;
 
     fetchSnapshot();
     const intervalId = setInterval(fetchSnapshot, refreshInterval);

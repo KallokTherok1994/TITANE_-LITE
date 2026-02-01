@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useHarmoniaSnapshot, useFetchHarmonia } from '../../stores/systemStore.selectors';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
@@ -17,6 +18,7 @@ export function HarmoniaFlow() {
   useEffect(() => {
     fetchHarmonia();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchHarmonia();
     }, 2500); // Update every 2.5s

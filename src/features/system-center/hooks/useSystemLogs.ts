@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 import type {
   LogEntry,
   LogFilter,
@@ -92,6 +93,9 @@ export function useSystemLogs(
   useEffect(() => {
     if (autoRefresh) {
       refreshLogs();
+      if (isLiteMode()) {
+        return;
+      }
       const interval = setInterval(refreshLogs, refreshInterval);
       return () => clearInterval(interval);
     }

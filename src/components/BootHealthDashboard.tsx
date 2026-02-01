@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { bootHealthMonitor } from '../utils/advancedBootMonitor';
 import { performanceOptimizer } from '../utils/performanceOptimizer';
 
@@ -105,6 +106,7 @@ const BootHealthDashboard: React.FC = () => {
     fetchMetrics();
 
     // Rafraîchir toutes les 30 secondes
+    if (isLiteMode()) return;
     const interval = setInterval(fetchMetrics, 30000);
     setRefreshInterval(interval);
 

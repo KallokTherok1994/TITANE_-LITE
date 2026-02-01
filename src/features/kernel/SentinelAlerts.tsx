@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { useSentinelSnapshot, useFetchSentinel } from '../../stores/systemStore.selectors';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
@@ -19,6 +20,7 @@ export function SentinelAlerts() {
   useEffect(() => {
     fetchSentinel();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchSentinel();
     }, 3000); // Update every 3s

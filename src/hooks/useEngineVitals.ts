@@ -11,6 +11,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { tauriClient } from '../services/tauriClient';
 
 export interface EngineVitals {
@@ -232,6 +233,7 @@ export function useEngineVitals(
     refresh();
 
     // Poll interval
+    if (isLiteMode()) return;
     const interval = setInterval(refresh, pollInterval);
 
     return () => {

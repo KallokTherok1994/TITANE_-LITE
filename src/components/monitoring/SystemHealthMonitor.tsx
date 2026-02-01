@@ -5,6 +5,7 @@
  */
 
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/environment';
 import { useState, useEffect, useCallback, memo } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -81,6 +82,7 @@ export const SystemHealthMonitor = memo(function SystemHealthMonitor({
     fetchMetrics();
     fetchEngines();
 
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       fetchMetrics();
     }, refreshInterval);

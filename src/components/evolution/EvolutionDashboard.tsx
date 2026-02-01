@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import type {
   EvolutionReport,
   EvolutionSuggestion,
@@ -300,7 +301,7 @@ export const EvolutionDashboard: React.FC<EvolutionDashboardProps> = ({
   }, [report]);
 
   useEffect(() => {
-    if (!onRefresh) return;
+    if (!onRefresh || isLiteMode()) return;
     const interval = setInterval(
       onRefresh,
       DEFAULT_EVOLUTION_ENGINE_CONFIG.analyzer.analyzeInterval

@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { titaneQuantumIntelligence } from '../utils/quantumIntelligence';
+import { isLiteMode } from '@/utils/environment';
 import type {
   ConsciousnessState,
   QuantumThought,
@@ -50,7 +51,7 @@ const ConsciousnessDashboard: React.FC<ConsciousnessDashboardProps> = ({
 
     updateData();
 
-    if (autoRefresh) {
+    if (autoRefresh && !isLiteMode()) {
       const interval = setInterval(updateData, 3000); // Rafraîchir toutes les 3 secondes
       return () => clearInterval(interval);
     }

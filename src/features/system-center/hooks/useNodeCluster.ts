@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { secureInvoke } from '@/lib/security';
+import { isLiteMode } from '@/utils/liteProfile';
 import type { ClusterStatus, ClusterStats, NodeInfo } from '../types/systemCenter.types';
 
 export interface UseNodeClusterReturn {
@@ -116,6 +117,9 @@ export function useNodeCluster(
   // Auto-refresh effect
   useEffect(() => {
     if (autoRefresh && isInitialized) {
+      if (isLiteMode()) {
+        return;
+      }
       const interval = setInterval(refreshStatus, refreshInterval);
       return () => clearInterval(interval);
     }

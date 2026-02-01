@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { isLiteMode } from '@/utils/environment';
 import { secureInvoke } from '@/lib/security';
 import type {
   OneCoreState,
@@ -320,6 +321,7 @@ export function useOneCore(): UseOneCoreReturn {
 
   // Rafraîchissement automatique
   useEffect(() => {
+    if (isLiteMode()) return;
     const interval = setInterval(() => {
       secureInvoke<OneCoreMetrics>('one_core_get_metrics')
         .then(setMetrics)
