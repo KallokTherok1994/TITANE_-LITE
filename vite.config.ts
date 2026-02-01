@@ -100,6 +100,10 @@ export default defineConfig({
         '**/src-tauri/**/out/tauri-codegen-assets/**',
         '**/src-tauri/**/out/**',
       ],
+      awaitWriteFinish: {
+        stabilityThreshold: 200,
+        pollInterval: 100,
+      },
     },
     hmr: {
       // Throttle rapid CSS updates to prevent cascading HMR loops
