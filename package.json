@@ -1,7 +1,7 @@
 {
   "name": "titane-lite",
-  "version": "27.2.0",
-  "description": "TITANE∞ LITE v27.2.0 - Cognitive Operating System: HMR Stabilization, CSS Token Consolidation, Production Optimized",
+  "version": "27.3.0",
+  "description": "TITANE∞ LITE v27.3.0 - Cognitive Operating System: HMR Cascade Fix (critical.css removal), Client-side throttling, CSS watcher optimization",
   "type": "module",
   "license": "SEE LICENSE.md",
   "packageManager": "pnpm@10.28.2",
