@@ -104,6 +104,7 @@ tmp/
 tsc
 💥
 *Phase
+MISSION_COMPLETE_*.txt
 test_persona_v24/
 playwright-report/
 test-results/
