@@ -168,3 +168,6 @@ deployment/latest/*.AppImage
 release/**/*.AppImage
 .tools/node/_extract/
 *.node
+# Runtime files
+.server.pid
+.tunnel-access.txt
