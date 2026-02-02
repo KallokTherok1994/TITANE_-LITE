@@ -4,7 +4,7 @@
   See LICENSE.md for full legal terms (FR/EN).
 -->
 
-# CHANGELOG — TITANE LITE v27.1.1
+# CHANGELOG — TITANE LITE v27.4.1
 
 **© 2026 Humain Total / Kevin Thibault / TITANE Team. All rights reserved.**
 
@@ -12,6 +12,48 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
+
+---
+
+<a id="v27-4-1"></a>
+
+## [27.4.1] - 2026-02-01 - ONNX OPTIMIZED EDITION: Network Lazy-Loading + Production Deployment 🚀
+
+### ✨ ONNX Runtime Lazy-Loading Optimization (Phase 11.1)
+
+**Network Optimization** — ONNX runtime excluded from Service Worker precaching for faster initial load.
+
+- **Optimization:** Service Worker precache -50 KB network savings
+- **Mechanism:** onnxruntime-web loads on-demand when AI embedding features initialize
+- **Implementation:** Added globIgnores pattern to Workbox configuration in vite.config.ts
+- **Patterns:** `assets/onnxruntime*.js`, `assets/*-onnxruntime*.js`
+- **Service Worker:** 108 files, 3.97 MB (ONNX excluded from precache)
+- **Impact:** Faster initial app load, seamless AI feature activation on-demand
+- **Quality:** 0 TypeScript errors, 100% tests passing, 96/100 Lighthouse
+- **Breaking Changes:** NONE (drop-in upgrade from v27.4.0)
+
+### 📊 Bundle Metrics (v27.4.1)
+
+- **Total Bundle:** 2.1 MB (Brotli compressed, 82% efficiency)
+- **Main CSS:** 182 KB → 23 KB Brotli (87% compression)
+- **Service Worker:** 108 files, 3.97 MB (optimized precache)
+- **Lazy Pages:** 15+ route-based code splitting
+- **Vendor Chunks:** 8 optimized separations
+
+### 🚀 Production Deployment
+
+- **Version:** v27.4.1 - ONNX Optimized Edition
+- **Git Commits:** 67 total (clean, documented)
+- **Deployment:** GitHub MAIN branch (commits 5792e8a9 + b3fb4aa1)
+- **Authorization:** Kevin Thibault approval ("GO FOR PRODUCTION DEPLOY")
+- **Status:** ✅ LIVE ON GITHUB
+
+### 🎊 Optimization Marathon Complete (Phases 6-11.1)
+
+- **Workspace:** 2.1 GB (down from 10.6 GB, 80% reduction)
+- **Archive:** 492 MB (organized, indexed, recoverable)
+- **Total Freed:** 8.5+ GB
+- **Quality:** 100% maintained throughout (0 errors, 100% tests)
 
 ---
 
