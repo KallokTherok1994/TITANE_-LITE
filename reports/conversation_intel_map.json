@@ -1,0 +1,372 @@
+{
+  "conversation_intelligence_architecture_map": {
+    "version": "27.4.0_audit_2026_02_07",
+    "timestamp": "2026-02-07T19:10:00Z",
+    "status": "EXPERIMENTAL (GAPS IDENTIFIED)",
+    "rings": {
+      "ring_1_types": {
+        "location": "src/types/",
+        "files": [
+          {
+            "path": "src/types/autonomy.ts",
+            "purpose": "ChatRequest, ChatResponse, ChatMessage types",
+            "status": "EXISTS",
+            "completeness": 0.6,
+            "issues": [
+              "ChatResponse union (ok | error) incomplete",
+              "No UnderstandingFrame type",
+              "No ReasoningPlan type",
+              "No SkillArtifact type"
+            ]
+          },
+          {
+            "path": "src/types/cognitiveCore.ts",
+            "purpose": "Cognitive core types (Ring 1-2)",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "issues": []
+          }
+        ],
+        "ring_completeness": 0.65,
+        "blocking_issues": [
+          "ChatResult union type needs strict validation (ok: true + content non-vide; or ok: false + userMessage)"
+        ]
+      },
+      "ring_2_engines": {
+        "location": "src/engines/cognitive/",
+        "files": [
+          {
+            "path": "src/engines/cognitive/UnderstandingEngine.ts",
+            "purpose": "Parse input → UnderstandingFrame",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["UnderstandingFrame with intent, domain, constraints, unknowns, confidence"]
+          },
+          {
+            "path": "src/engines/cognitive/ReasoningEngine.ts",
+            "purpose": "Frame → ReasoningPlan (deterministic)",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["ReasoningPlan with options, chosen, justification, fallback"]
+          },
+          {
+            "path": "src/engines/cognitive/SkillRegistry.ts",
+            "purpose": "Skill lookup + execution",
+            "status": "EXISTS (NEW)",
+            "completeness": 0.7,
+            "issues": [
+              "Only 3 builtin skills (clarify, decompose, detect_contradiction)",
+              "No integration with existing skill store if present"
+            ]
+          },
+          {
+            "path": "src/engines/cognitive/LearningGovernance.ts",
+            "purpose": "Evolution governance EXPERIMENTAL → SEALED",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["EvolutionState transitions with audit trail"]
+          },
+          {
+            "path": "src/modules/talkToTitane/TalkToTitaneEngine.ts",
+            "purpose": "Intent detection, response generation (legacy)",
+            "status": "EXISTS",
+            "completeness": 0.5,
+            "issues": [
+              "Not integrated with cognitive core",
+              "Duplicates some UnderstandingEngine logic",
+              "No offline mode enforcement"
+            ]
+          }
+        ],
+        "ring_completeness": 0.8,
+        "blocking_issues": [
+          "Missing StrategySelector (skill vs retrieval vs template vs LLM vs online)",
+          "Missing ResponseComposer (Always Respond guarantee)",
+          "No explicit offline-mode enforcement in existing engines"
+        ]
+      },
+      "ring_3_services": {
+        "location": "src/services/",
+        "files": [
+          {
+            "path": "src/services/ai/ProviderRouter.ts",
+            "purpose": "Route request to provider (offline-first)",
+            "status": "EXISTS",
+            "completeness": 0.4,
+            "issues": [
+              "No OFFLINE mode enforcement",
+              "No explicit local-first strategy",
+              "May attempt network calls without opt-in",
+              "No Always Respond guarantee"
+            ]
+          },
+          {
+            "path": "src/services/cognitive/CognitiveRouter.ts",
+            "purpose": "Orchestrate all Ring 2 engines",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["Orchestrated understand → reason → execute → learn pipeline"]
+          },
+          {
+            "path": "src/services/cognitive/MemoryService.ts",
+            "purpose": "STM/MTM/LTM persistence + consolidation",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["Memory stats, query API, auto-consolidation"]
+          },
+          {
+            "path": "src/services/cognitive/OfflineSafetyNet.ts",
+            "purpose": "Fallback handler, recovery strategies",
+            "status": "EXISTS (NEW)",
+            "completeness": 1.0,
+            "produces": ["Health status, recovery attempts, MUA (Minimum Useful Answer)"]
+          },
+          {
+            "path": "src/services/api/chat.ts",
+            "purpose": "Chat API (streaming, legacy)",
+            "status": "EXISTS",
+            "completeness": 0.6,
+            "issues": [
+              "No offline mode",
+              "Relies on backend provider cascade",
+              "No Always Respond guarantee (can return empty)",
+              "Fallback logic exists but fragile"
+            ]
+          },
+          {
+            "path": "src/services/ai/providers/tauriChat.ts",
+            "purpose": "Tauri backend IPC provider",
+            "status": "EXISTS",
+            "completeness": 0.7,
+            "issues": [
+              "Depends on backend Rust availability",
+              "No offline fallback in provider itself",
+              "Circuit breaker logic exists but incomplete"
+            ]
+          }
+        ],
+        "ring_completeness": 0.65,
+        "blocking_issues": [
+          "ProviderRouter not truly offline-first",
+          "No NetworkGuard (proof of attempted calls)",
+          "No AssimilationService (capturing online responses as assets)",
+          "No explicit Always Respond mechanism at service layer"
+        ]
+      },
+      "ring_4_ui": {
+        "location": "src/components/",
+        "files": [
+          {
+            "path": "src/components/chat/ChatPanel.tsx",
+            "purpose": "Main chat UI",
+            "status": "EXISTS",
+            "completeness": 0.5,
+            "issues": [
+              "No offline mode indicator",
+              "No provider health display",
+              "No skill inventory visible",
+              "Loading UX can appear frozen (no watchdog)"
+            ]
+          },
+          {
+            "path": "src/components/AutonomyPanel.tsx",
+            "purpose": "Autonomy stats display",
+            "status": "EXISTS (PARTIAL)",
+            "completeness": 0.4,
+            "issues": [
+              "No cognitive core metrics",
+              "No offline proof display",
+              "No recovery strategy UX"
+            ]
+          }
+        ],
+        "ring_completeness": 0.45,
+        "blocking_issues": [
+          "No anti-silence watchdog UI",
+          "No cognitive state visualization",
+          "No skill/template browser",
+          "No offline mode toggle"
+        ]
+      },
+      "ipc_contract": {
+        "location": "src-tauri/src/commands/",
+        "endpoints": [
+          {
+            "name": "conversation_generate",
+            "purpose": "Main chat generation endpoint",
+            "status": "EXISTS",
+            "completeness": 0.7,
+            "contract": "ChatRequest -> ChatResponse (ok | error)",
+            "offline_capable": "PARTIAL (depends on provider cascade)",
+            "issues": [
+              "No explicit offline mode parameter",
+              "Provider selection not deterministic",
+              "No proof of offline execution"
+            ]
+          },
+          {
+            "name": "chat_send_message",
+            "purpose": "Legacy chat send",
+            "status": "EXISTS",
+            "completeness": 0.6,
+            "issues": [
+              "Less structured than conversation_generate",
+              "No clear offline fallback path"
+            ]
+          }
+        ],
+        "ring_completeness": 0.65,
+        "blocking_issues": [
+          "No unified IPC contract (multiple endpoints doing chat)",
+          "No explicit ChatResult validation enforced",
+          "No NetworkGuard instrumentation at IPC boundary",
+          "No Always Respond guarantee at IPC level"
+        ]
+      },
+      "offline_gaps": {
+        "critical": [
+          {
+            "gap": "No explicit OFFLINE mode flag",
+            "impact": "Providers may attempt network calls without permission",
+            "location": "ProviderRouter, all providers",
+            "severity": "CRITICAL"
+          },
+          {
+            "gap": "No StrategySelector enforcing offline-first priority",
+            "impact": "Online providers may be tried before offline skills",
+            "location": "Ring 3 (missing service)",
+            "severity": "CRITICAL"
+          },
+          {
+            "gap": "No Always Respond guarantee at any layer",
+            "impact": "Chat can appear frozen or return empty on provider failure",
+            "location": "useChat, ChatService, ProviderRouter",
+            "severity": "CRITICAL"
+          },
+          {
+            "gap": "No proof of offline status (NetworkGuard missing)",
+            "impact": "Cannot verify zero network attempts in OFFLINE mode",
+            "location": "Ring 3 (missing service)",
+            "severity": "HIGH"
+          }
+        ],
+        "high": [
+          {
+            "gap": "ResponseComposer (Always Respond) not implemented",
+            "impact": "Responses may be missing fallback content",
+            "location": "Ring 2 (missing engine)",
+            "severity": "HIGH"
+          },
+          {
+            "gap": "No AssimilationService for learning from online responses",
+            "impact": "No local asset generation from API calls",
+            "location": "Ring 3 (missing service)",
+            "severity": "HIGH"
+          },
+          {
+            "gap": "No explicit watchdog for UI (prevents frozen UI)",
+            "impact": "Hidden timeouts, infinite loading states",
+            "location": "Ring 4 (missing UI)",
+            "severity": "HIGH"
+          }
+        ],
+        "medium": [
+          {
+            "gap": "TalkToTitaneEngine not integrated with cognitive core",
+            "impact": "Legacy code path duplicates logic",
+            "location": "src/modules/talkToTitane/",
+            "severity": "MEDIUM"
+          }
+        ]
+      }
+    },
+    "provider_cascade": {
+      "location": "src-tauri/src/chat_orchestrator.rs (Rust backend)",
+      "current_order": [
+        "ollama (local LLM if available)",
+        "openai (if key present)",
+        "anthropic (if key present)",
+        "gemini (if key present)",
+        "local (fallback template)",
+        "SILENCE (PROBLEM: no guarantee)"
+      ],
+      "desired_order_offline": [
+        "skills (deterministic, always first)",
+        "retrieval (if sources available)",
+        "templates (generic response)",
+        "local_llm (if available)",
+        "NEVER SILENT (fallback MUA)"
+      ],
+      "issues": [
+        "No OFFLINE mode parameter",
+        "No skills step before provider cascade",
+        "No explicit fallback to MUA"
+      ]
+    },
+    "memory_state": {
+      "short_term_memory": {
+        "location": "Varies (useChat hook, ChatService, etc.)",
+        "persistence": "In-memory during session",
+        "issues": [
+          "Not unified across components",
+          "Lost on refresh",
+          "No STM/MTM/LTM hierarchy tracking"
+        ]
+      },
+      "medium_term_memory": {
+        "location": "localStorage (implicit in some places)",
+        "persistence": "Browser storage (limited)",
+        "issues": [
+          "No structured consolidation",
+          "No automatic aging"
+        ]
+      },
+      "long_term_memory": {
+        "location": "File-based or IndexedDB (if present)",
+        "persistence": "TBD",
+        "issues": [
+          "Not integrated with cognitive core",
+          "No unified query API"
+        ]
+      }
+    },
+    "test_coverage": {
+      "unit_tests": {
+        "cognitive_core": {
+          "location": "tests/integration/cognitive-core.test.ts",
+          "status": "EXISTS (19/19 PASS)",
+          "coverage_level": "HIGH"
+        },
+        "providers": {
+          "location": "Various",
+          "status": "PARTIAL",
+          "issues": [
+            "No offline mode tests",
+            "No Always Respond tests",
+            "No integration tests"
+          ]
+        }
+      },
+      "e2e_tests": {
+        "offline_mode": {
+          "status": "MISSING",
+          "severity": "CRITICAL",
+          "description": "No E2E test for OFFLINE mode with 10+ prompts generating responses"
+        },
+        "hybrid_mode": {
+          "status": "MISSING",
+          "severity": "HIGH"
+        }
+      }
+    },
+    "summary": {
+      "ring_1_readiness": "80% (types mostly defined, needs ChatResult validation)",
+      "ring_2_readiness": "80% (engines exist, needs StrategySelector + ResponseComposer)",
+      "ring_3_readiness": "65% (partial ProviderRouter, missing NetworkGuard + AssimilationService + explicit offline enforce)",
+      "ring_4_readiness": "45% (needs watchdog + offline indicator + cognitive metrics)",
+      "overall_readiness": "67.5% (EXPERIMENTAL → needs gaps filled for QUALIFIED)",
+      "blocker_count": 8,
+      "go_no_go_phase_1": "GO (with gaps tracked)"
+    }
+  }
+}

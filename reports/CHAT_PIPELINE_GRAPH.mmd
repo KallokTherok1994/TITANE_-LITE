@@ -1,0 +1,189 @@
+graph TB
+    %% ═══════════════════════════════════════════════════════════════════
+    %% TITANE∞ Chat Pipeline — Architecture Factuelle v27.4.1
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% COUCHE 1: FRONTEND UI (React + TypeScript)
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    USER["👤 USER INPUT<br/>ChatInput.tsx<br/>onSend(text)"]
+    
+    HOOK["🪝 useConversationEngine<br/>src/hooks/useConversationEngine.ts<br/>sendMessage(content)"]
+    
+    UI_STATE["💾 UI STATE UPDATE<br/>setMessages([...prev, userMessage])<br/>setIsLoading(true)"]
+    
+    MEMORY_SAVE["💾 MEMORY PERSIST<br/>useChatMemory.saveMessage()<br/>localStorage + STM/MTM/LTM"]
+    
+    SERVICE["🔧 SERVICE CALL<br/>processMessage({message, conversationId, mode})"]
+    
+    IPC_WRAP["📡 IPC WRAPPER<br/>src/services/tauri/chatEngine.commands.ts<br/>generate(OmegaGenerateArgs)"]
+    
+    SECURE_INVOKE["🔒 SECURE INVOKE<br/>secureInvoke('conversation_generate', args)<br/>@/lib/security.ts"]
+    
+    GUARD["🛡️ ANTI-SILENCE GUARD<br/>ensureOmegaResponse()<br/>if content.trim() empty → fallback"]
+    
+    UI_RENDER["🖥️ UI RENDER<br/>MessageList → MessageBubble<br/>Display assistant message"]
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% COUCHE 2: BACKEND RUST (Tauri)
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    TAURI_CMD["⚙️ TAURI COMMAND<br/>conversation_generate()<br/>src-tauri/.../commands.rs:35"]
+    
+    PARSE_MODE["🔄 PARSE MODE<br/>String → ConversationMode<br/>coach|strategist|brainstorming|..."]
+    
+    PARSE_PROVIDER["🔄 PARSE PROVIDER<br/>String → ProviderPreference<br/>auto|gemini|ollama|claude|..."]
+    
+    BUILD_REQUEST["📦 BUILD REQUEST<br/>ConversationRequest {<br/>  user_message<br/>  conversation_id<br/>  mode<br/>  ai_config<br/>}"]
+    
+    ORCHESTRATOR["🧠 ORCHESTRATOR<br/>engine.process_message(request)<br/>src-tauri/.../mod.rs:154"]
+    
+    VALIDATE_EMPTY["✅ VALIDATE EMPTY<br/>if response.assistant_message.trim().is_empty()<br/>→ Err('AI response content is empty')"]
+    
+    MEASURE_LATENCY["⏱️ MEASURE LATENCY<br/>latency_ms = start_time.elapsed()"]
+    
+    BUILD_JSON["📤 BUILD JSON<br/>serde_json::json!({<br/>  content<br/>  conversationId<br/>  messageId<br/>  metadata<br/>})<br/>✅ Log success"]
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% COUCHE 3: TIP — TITANE Intelligence Primaire (Double Pipeline)
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    OMEGA_TRY["🌀 TRY: OMEGA PIPELINE v2<br/>omega_bridge.process_through_omega()"]
+    
+    OMEGA_CONVERT["🔄 OMEGA CONVERSION<br/>convert_to_conversation_response()<br/>OMEGA → ConversationResponse"]
+    
+    LEGACY_FALLBACK["⚠️ FALLBACK: LEGACY PIPELINE<br/>pipeline.process(request)<br/>src-tauri/.../pipeline.rs"]
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% SOUS-PIPELINE: OMEGA v2 (Principal)
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    OMEGA_UNDERSTAND["1️⃣ UNDERSTAND<br/>Analyze intent + emotion"]
+    
+    OMEGA_RECALL["2️⃣ RECALL<br/>Load memory context<br/>STM/MTM/LTM"]
+    
+    OMEGA_PLAN["3️⃣ PLAN<br/>Strategy selection<br/>Skill|Retrieval|Template"]
+    
+    OMEGA_SELECT["4️⃣ SELECT<br/>Provider + Router decision<br/>Auto → Gemini|Ollama|Local"]
+    
+    OMEGA_ACT["5️⃣ ACT<br/>Generate response<br/>AI Router call"]
+    
+    OMEGA_COMPOSE["6️⃣ COMPOSE<br/>FrenchMastery post-process<br/>Quality + Style"]
+    
+    OMEGA_TRACE["7️⃣ TRACE<br/>Log metrics + trace_id<br/>Latency + Provider"]
+    
+    OMEGA_LEARN["8️⃣ LEARN<br/>Update memory + Assimilation"]
+    
+    OMEGA_SUCCESS["✅ OMEGA SUCCESS<br/>Return OmegaPipelineResult<br/>latency_ms + intent + safety_score"]
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% SOUS-PIPELINE: LEGACY (Fallback)
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    LEGACY_1["1️⃣ PREPROCESS<br/>Validate + Clean message"]
+    
+    LEGACY_PARALLEL["2-4️⃣ PARALLEL tokio::join!<br/>- Intent Analysis (CPU-bound)<br/>- Emotion Analysis (CPU-bound)<br/>- Memory Context (IO-bound)"]
+    
+    LEGACY_5["5️⃣ BUILD PROMPT<br/>Enriched system prompt<br/>+ context + emotion"]
+    
+    LEGACY_6["6️⃣ AI GENERATION<br/>ai_router.generate()<br/>Provider selection"]
+    
+    LEGACY_6_5["6.5️⃣ FRENCH MASTERY<br/>Post-processing CRITIQUE<br/>FrenchMasteryProcessor"]
+    
+    LEGACY_7["7️⃣ MEMORY SAVE<br/>Store conversation turn<br/>Update context"]
+    
+    LEGACY_SUCCESS["✅ LEGACY SUCCESS<br/>Return ConversationResponse"]
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% FLOW PRINCIPAL
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    USER --> HOOK
+    HOOK --> UI_STATE
+    UI_STATE --> MEMORY_SAVE
+    MEMORY_SAVE --> SERVICE
+    SERVICE --> IPC_WRAP
+    IPC_WRAP --> SECURE_INVOKE
+    
+    SECURE_INVOKE -->|"IPC: conversation_generate"| TAURI_CMD
+    
+    TAURI_CMD --> PARSE_MODE
+    PARSE_MODE --> PARSE_PROVIDER
+    PARSE_PROVIDER --> BUILD_REQUEST
+    BUILD_REQUEST --> ORCHESTRATOR
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% TIP ORCHESTRATOR: DOUBLE PIPELINE
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    ORCHESTRATOR --> OMEGA_TRY
+    
+    %% OMEGA Pipeline v2
+    OMEGA_TRY -->|"✅ SUCCESS"| OMEGA_UNDERSTAND
+    OMEGA_UNDERSTAND --> OMEGA_RECALL
+    OMEGA_RECALL --> OMEGA_PLAN
+    OMEGA_PLAN --> OMEGA_SELECT
+    OMEGA_SELECT --> OMEGA_ACT
+    OMEGA_ACT --> OMEGA_COMPOSE
+    OMEGA_COMPOSE --> OMEGA_TRACE
+    OMEGA_TRACE --> OMEGA_LEARN
+    OMEGA_LEARN --> OMEGA_SUCCESS
+    
+    OMEGA_SUCCESS --> OMEGA_CONVERT
+    OMEGA_CONVERT -->|"✅ CONVERSION OK"| VALIDATE_EMPTY
+    
+    %% Fallback vers Legacy
+    OMEGA_TRY -->|"❌ OMEGA FAIL"| LEGACY_FALLBACK
+    OMEGA_CONVERT -->|"❌ CONVERSION FAIL"| LEGACY_FALLBACK
+    
+    %% Legacy Pipeline
+    LEGACY_FALLBACK --> LEGACY_1
+    LEGACY_1 --> LEGACY_PARALLEL
+    LEGACY_PARALLEL --> LEGACY_5
+    LEGACY_5 --> LEGACY_6
+    LEGACY_6 --> LEGACY_6_5
+    LEGACY_6_5 --> LEGACY_7
+    LEGACY_7 --> LEGACY_SUCCESS
+    
+    LEGACY_SUCCESS --> VALIDATE_EMPTY
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% RETOUR FRONTEND
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    VALIDATE_EMPTY -->|"✅ CONTENT OK"| MEASURE_LATENCY
+    VALIDATE_EMPTY -->|"❌ EMPTY"| ERROR_EMPTY["❌ ERROR<br/>Err('AI response content is empty')<br/>Return to frontend"]
+    
+    MEASURE_LATENCY --> BUILD_JSON
+    BUILD_JSON -->|"IPC Response"| GUARD
+    
+    GUARD -->|"Content OK"| UI_RENDER
+    GUARD -->|"Content empty → Apply fallback"| UI_RENDER
+    
+    ERROR_EMPTY -->|"IPC Error"| HOOK
+    HOOK -->|"Catch error"| UI_RENDER
+    
+    UI_RENDER --> USER
+    
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    %% STYLES
+    %% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    classDef frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef ipc fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef omega fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+    classDef legacy fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef guard fill:#ffebee,stroke:#c62828,stroke-width:3px
+    classDef success fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    classDef error fill:#ffcdd2,stroke:#c62828,stroke-width:2px
+    
+    class USER,HOOK,UI_STATE,MEMORY_SAVE,SERVICE,UI_RENDER frontend
+    class IPC_WRAP,SECURE_INVOKE,GUARD ipc
+    class TAURI_CMD,PARSE_MODE,PARSE_PROVIDER,BUILD_REQUEST,ORCHESTRATOR,VALIDATE_EMPTY,MEASURE_LATENCY,BUILD_JSON backend
+    class OMEGA_TRY,OMEGA_UNDERSTAND,OMEGA_RECALL,OMEGA_PLAN,OMEGA_SELECT,OMEGA_ACT,OMEGA_COMPOSE,OMEGA_TRACE,OMEGA_LEARN,OMEGA_SUCCESS,OMEGA_CONVERT omega
+    class LEGACY_FALLBACK,LEGACY_1,LEGACY_PARALLEL,LEGACY_5,LEGACY_6,LEGACY_6_5,LEGACY_7,LEGACY_SUCCESS legacy
+    class GUARD,VALIDATE_EMPTY guard
+    class OMEGA_SUCCESS,LEGACY_SUCCESS,BUILD_JSON success
+    class ERROR_EMPTY error

@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-02-08T03:38:40Z",
+  "version": "v27.4.1",
+  "baselines": {
+    "vitest": {
+      "testFiles": {
+        "total": 169,
+        "passed": 117,
+        "failed": 50,
+        "skipped": 2
+      },
+      "tests": {
+        "total": 3144,
+        "passed": 2760,
+        "failed": 353,
+        "skipped": 21
+      },
+      "duration": "2341.28s",
+      "notes": "Many failures due to Tauri backend unavailability in test mode (health_check errors)"
+    },
+    "rust": {
+      "unitTests": {
+        "total": 722,
+        "passed": 722,
+        "failed": 0,
+        "ignored": 3
+      },
+      "integrationTests": {
+        "cycleEngine": {
+          "total": 23,
+          "passed": 23,
+          "duration": "5.01s"
+        },
+        "kernelIntegration": {
+          "total": 11,
+          "passed": 11,
+          "duration": "2.42s"
+        }
+      },
+      "totalTests": 756,
+      "totalPassed": 756,
+      "notes": "All tests passing after crate import fixes"
+    },
+    "architecture": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "duration": "3.51s",
+      "tests": [
+        "engine isolation (no @/services imports)",
+        "pure functions (69 side-effects warnings, below threshold)",
+        "engines directory structure"
+      ]
+    },
+    "compliance": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "duration": "4.04s",
+      "tests": [
+        "no HTTP server frameworks",
+        "block vite preview",
+        "use tauri dev",
+        "no standalone SPA frameworks",
+        "use ConversationManager"
+      ]
+    },
+    "e2e_wdio": {
+      "status": "created_not_executed",
+      "total": 7,
+      "passed": null,
+      "failed": null,
+      "scenarios": [
+        "boot (validates .app-layout)",
+        "chat (sends message, validates bubble)",
+        "settings (navigation + heading check)",
+        "memory (navigation + heading check)",
+        "watchdog (navigation + heading check)",
+        "persistence (refresh test)",
+        "navigation (route transitions)"
+      ],
+      "notes": "Suite created, requires tauri-driver + WebKitWebDriver installation before execution"
+    }
+  },
+  "summary": {
+    "totalTestsExecuted": 3900,
+    "totalTestsPassed": 3523,
+    "totalTestsFailed": 353,
+    "passRate": "90.3%",
+    "criticalGaps": [
+      "50 Vitest test files failing (mostly due to Tauri backend unavailability in test mode)",
+      "WDIO E2E suite not yet executed (requires driver installation)",
+      "Voice control tests failing (8/8 in VoiceControl.test.tsx)"
+    ]
+  },
+  "testMatrix": {
+    "phase1_gates": "4/4 PASS (40/40 tests)",
+    "phase2_documentation": "98% complete",
+    "phase3_ipcAudit": "0 validation issues",
+    "phase4_wdioSuite": "7 created, not executed",
+    "phase5_vitestOptimization": "pending baseline analysis",
+    "phase6_rustPerformance": "pending cargo bench",
+    "phase7_cicdPipeline": "pending",
+    "phase8_performanceBenchmarks": "pending"
+  }
+}

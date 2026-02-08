@@ -1,0 +1,267 @@
+{
+  "version": "1.0.0",
+  "date": "2026-02-07",
+  "title": "TITANE∞ Autonomy Architecture Map (PHASE 0)",
+  "ring_model": "4-Ring Strict Isolation",
+  "components": {
+    "ring_1_types": {
+      "description": "Core types & interfaces (zero imports)",
+      "ring": 1,
+      "location": "src/types/",
+      "files": {
+        "chat.ts": {
+          "path": "src/types/chat.ts",
+          "responsibility": "ChatResult, AutonomyMode, ProviderAvailability types",
+          "critical": true
+        },
+        "autonomy.ts": {
+          "path": "src/types/autonomy.ts",
+          "responsibility": "OfflineProof, AutonomyMode, ProviderAvailability",
+          "critical": true,
+          "status": "TO_CREATE"
+        }
+      }
+    },
+    "ring_2_engines": {
+      "description": "Pure logic engines (Ring 1 imports only)",
+      "ring": 2,
+      "location": "src/engines/",
+      "engines": {
+        "AutonomousChatEngine": {
+          "path": "src/engines/autonomous/AutonomousChatEngine.ts",
+          "responsibility": "Deterministic response generation (understand, retrieve, decide, compose, self_check)",
+          "critical": true,
+          "methods": [
+            "understand(prompt): Intent & Entities",
+            "retrieve(intent): MemoryContext & RAG",
+            "decide(context): Strategy (SKILL|RETRIEVAL|TEMPLATE|LOCAL_LLM|ONLINE)",
+            "compose(decision): ChatResult",
+            "self_check(result): Validation"
+          ],
+          "status": "TO_CREATE"
+        },
+        "OfflineFallbackEngine": {
+          "path": "src/engines/offline/OfflineFallbackEngine.ts",
+          "responsibility": "Always-respond strategies when network unavailable",
+          "strategies": [
+            "PLAN_GENERATION",
+            "CHECKLIST_CREATION",
+            "TEMPLATE_MATCHING",
+            "MEMORY_RETRIEVAL"
+          ],
+          "critical": true,
+          "status": "TO_CREATE"
+        },
+        "RetrievalEngine": {
+          "path": "src/engines/retrieval/RetrievalEngine.ts",
+          "responsibility": "Hybrid RAG (keyword + vector)",
+          "critical": true,
+          "methods": [
+            "indexize(documents): LocalIndex",
+            "retrieveHybrid(query, k): TopK with provenance",
+            "rankResults(results): Scored results"
+          ],
+          "status": "TO_CREATE"
+        },
+        "SkillEngine": {
+          "path": "src/engines/skills/SkillEngine.ts",
+          "responsibility": "Deterministic skill execution",
+          "critical": true,
+          "types": [
+            "SkillArtifact (intent, inputs, steps, checks, examples, provenance, version)",
+            "SkillRunner (execute, validate, test)"
+          ],
+          "status": "TO_CREATE"
+        },
+        "ExistingEngines": {
+          "description": "Already implemented (reuse/integrate)",
+          "engines": [
+            "FlowEngine (src/engines/flow/FlowEngine.ts)",
+            "CoherenceEngine (src/engines/coherence/)",
+            "AdaptationEngine (src/engines/adaptation/)",
+            "UnifiedMemory (src-tauri/src/engines/unified_memory/)"
+          ]
+        }
+      }
+    },
+    "ring_3_services": {
+      "description": "I/O orchestration (Ring 1-2 only)",
+      "ring": 3,
+      "location": "src/services/",
+      "services": {
+        "ProviderRouter": {
+          "path": "src/services/ai/ProviderRouter.ts",
+          "responsibility": "Route request: OFFLINE → LOCAL_LLM → ONLINE (strict order)",
+          "critical": true,
+          "current_location": "src/core/services/orchestrator.ts::selectOptimalProvider()",
+          "needs_refactor": "Separate offline-first logic into dedicated service",
+          "flow": [
+            "Check if provider online (skip non-essential)",
+            "Try LOCAL_LLM if available (Ollama, llama.cpp)",
+            "Fallback to OFFLINE strategies",
+            "Only attempt ONLINE if explicit opt-in"
+          ],
+          "status": "PARTIAL"
+        },
+        "NetworkGuard": {
+          "path": "src/services/network/NetworkGuard.ts",
+          "responsibility": "Block network in OFFLINE mode, proof metrics",
+          "critical": true,
+          "metrics": [
+            "network_attempted: boolean",
+            "provider_used: none|local|online",
+            "offline_proof: signature"
+          ],
+          "status": "TO_CREATE"
+        },
+        "ChatService": {
+          "path": "src/services/api/chat.ts",
+          "responsibility": "Tauri IPC wrapper for conversation",
+          "current_status": "Exists, needs OFFLINE hardening",
+          "integration": "Already uses Tauri IPC (secure)",
+          "issue": "Fallback logic may not be explicit"
+        },
+        "ConversationService": {
+          "path": "src/services/conversation/ConversationService.ts",
+          "responsibility": "Conversation lifecycle (create, log, retrieve)",
+          "location_current": "Backend: conversation_engine Tauri commands",
+          "persistence": "Local filesystem + optional cloud (opt-in)"
+        },
+        "MemoryService": {
+          "path": "src/services/memory/MemoryService.ts",
+          "responsibility": "STM/MTM/LTM retrieval & storage",
+          "location_current": "src/services/memory/ + src-tauri/src/engines/unified_memory/",
+          "storage": "Local SQLite + in-memory cache"
+        }
+      }
+    },
+    "ring_4_os_ui": {
+      "description": "System boundary (React + Tauri)",
+      "ring": 4,
+      "location": "src/components/ + src-tauri/src/commands/",
+      "components": {
+        "ChatUI": {
+          "path": "src/components/AIChatBubble.tsx",
+          "responsibility": "Chat UI with Always Respond guarantee",
+          "critical": true,
+          "watchdog": "Timeout handler + loading state management",
+          "status": "EXISTS, needs Always Respond hardening"
+        },
+        "AutonomyPanel": {
+          "path": "src/components/AutonomyPanel.tsx",
+          "responsibility": "Display mode (OFFLINE|LOCAL_LLM|HYBRID|ONLINE), diagnostics",
+          "critical": true,
+          "features": [
+            "Mode selector",
+            "Provider availability indicators",
+            "Skills count + RAG health",
+            "Network activity detector"
+          ],
+          "status": "TO_CREATE"
+        },
+        "ConversationGenerateCommand": {
+          "path": "src-tauri/src/commands/conversation_generate.rs",
+          "responsibility": "Tauri command handler (OMEGA v2)",
+          "critical": true,
+          "status": "EXISTS, needs OFFLINE path"
+        }
+      }
+    }
+  },
+  "data_flow": {
+    "chat_orchestration": {
+      "description": "Message flow from UI to response",
+      "steps": [
+        "1. UI: ChatBubble receives user input",
+        "2. Service: ChatService.sendMessageStream() via Tauri IPC",
+        "3. Backend: conversation_generate command invoked",
+        "4. Router: selectOptimalProvider() with offline-first check",
+        "5. Engine: AutonomousChatEngine.process()",
+        "6. Response: ChatResult (structured, non-empty)",
+        "7. UI: Display + Always Respond guarantee"
+      ]
+    },
+    "memory_retrieval": {
+      "description": "Conversation memory flow",
+      "components": [
+        "STM (Short-term): Conversation buffer (immediate)",
+        "MTM (Mid-term): Recent messages (session history)",
+        "LTM (Long-term): Persistent storage (SQLite)",
+        "RAG Index: Local vector + keyword index"
+      ],
+      "storage": "src-tauri/src/engines/unified_memory/ + local SQLite"
+    },
+    "provider_selection": {
+      "description": "Provider routing decision tree",
+      "current": "src/core/services/orchestrator.ts::selectOptimalProvider()",
+      "problem": "Not explicit about offline-first, no network guard",
+      "solution": "Dedicated ProviderRouter service with offline path"
+    }
+  },
+  "network_surface": {
+    "frontend": {
+      "components": [
+        "src/features/governance-center/hooks/useGovernance.ts",
+        "src/services/api/chat.ts (via Tauri IPC)"
+      ],
+      "endpoints": [
+        "http://localhost:11434 (Ollama local, optional)",
+        "Tauri IPC → Backend (secure, local)"
+      ]
+    },
+    "backend": {
+      "components": [
+        "src-tauri/src/ollama.rs",
+        "src-tauri/src/gemini_provider_refactor.rs",
+        "src-tauri/src/ai/security.rs",
+        "src-tauri/src/engines/unified_memory/summarizer.rs"
+      ],
+      "network_attempts": [
+        "Ollama: http://127.0.0.1:11434 (optional local)",
+        "Gemini: https://generativelanguage.googleapis.com (optional, if key)",
+        "OpenAI: https://api.openai.com (optional, if key)",
+        "Anthropic: https://api.anthropic.com (optional, if key)"
+      ],
+      "critical": "All network calls are OPTIONAL, not required for OFFLINE autonomy"
+    }
+  },
+  "gates": {
+    "gate_p0": {
+      "description": "TITANE can respond without ANY provider",
+      "status": "IN_PROGRESS",
+      "validation": [
+        "Test: OFFLINE mode, 30 prompts → 30 responses (non-empty, structured)",
+        "Proof: network_attempted=false in all logs",
+        "Fallback: OfflineFallbackEngine produces useful output"
+      ]
+    },
+    "gate_p0_network": {
+      "description": "Zero network attempted in OFFLINE mode",
+      "status": "TO_VALIDATE",
+      "proof_required": [
+        "NetworkGuard.network_attempted=false",
+        "No DNS/TCP SYN to external hosts",
+        "Logs + trace prove all requests handled locally"
+      ]
+    }
+  },
+  "action_items": {
+    "phase_0_immediate": [
+      "✅ Create AUTONOMY_MAP.json (this file)",
+      "🔄 Create NETWORK_SURFACE.md (detail endpoint risk)",
+      "🔄 Validate current offline capability (test 30 prompts)",
+      "🔄 Refactor selectOptimalProvider() → ProviderRouter service"
+    ],
+    "phase_1": [
+      "Create Ring 1: autonomy.ts types",
+      "Create Ring 2: AutonomousChatEngine, OfflineFallbackEngine",
+      "Hardened error handling (ChatResult contract)"
+    ]
+  },
+  "critical_notes": {
+    "1": "No Tauri-external HTTP needed for local operation",
+    "2": "Ollama is optional enhancement, not requirement",
+    "3": "Gemini/OpenAI/Anthropic all optional, gated by API keys",
+    "4": "OFFLINE mode must produce useful responses WITHOUT any network"
+  }
+}
